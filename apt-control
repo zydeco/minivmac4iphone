@@ -4,6 +4,7 @@ Version: $VERSION
 Architecture: iphoneos-arm
 Description: Mini vMac Mac Plus emulator
 Homepage: http://namedfork.net/iphone/minivmac
+Depiction: http://namedfork.net/iphone/minivmac/cydia-info.html
 Maintainer: Jesus A. Alvarez <zydeco@namedfork.net>
 Author: Jesus A. Alvarez <zydeco@namedfork.net>
 Section: Emulation
