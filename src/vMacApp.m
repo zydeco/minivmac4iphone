@@ -58,7 +58,8 @@ vMacApp* _vmacAppSharedInstance = nil;
         [defaults setBool:YES forKey:@"ScreenAntialias"];
     if ([defaults objectForKey:@"ScreenSizeToFit"] == nil)
         [defaults setBool:YES forKey:@"ScreenSizeToFit"];
-    
+    if ([defaults objectForKey:@"KeyboardAlpha"] == nil)
+        [defaults setFloat:0.8 forKey:@"KeyboardAlpha"];
     [defaults synchronize];
 }
 

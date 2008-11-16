@@ -1,5 +1,7 @@
 #import "SettingsView.h"
 #import "vMacApp.h"
+#import <UIKit/UIPreferencesControlTableCell.h>
+#import <UIKit/UISliderControl.h>
 
 extern NSString *kUIButtonBarButtonAction;
 extern NSString *kUIButtonBarButtonInfo;
@@ -125,25 +127,42 @@ extern NSString *kUIButtonBarButtonType;
 
 - (int)preferencesTable:(UIPreferencesTable*)aTable numberOfRowsInGroup:(int)group {
     if (group == settingsGroupKeyboard)
-        return [layouts count];
+        return [layouts count] + 1;
 }
 
 - (UIPreferencesTableCell*)preferencesTable:(UIPreferencesTable*)aTable cellForGroup:(int)group {
     UIPreferencesTableCell * cell = [[UIPreferencesTableCell alloc] init];
     
     if (group == settingsGroupKeyboard)
-        [cell setTitle:@"Keyboard Layout"];
+        [cell setTitle:@"Keyboard"];
     
     return [cell autorelease];
 }
 
 - (UIPreferencesTableCell*)preferencesTable:(UIPreferencesTable*)aTable cellForRow:(int)row inGroup:(int)group {
-    UIPreferencesTableCell * cell;
+    id cell;
     
     if (group == settingsGroupKeyboard) {
-        cell = [[UIPreferencesTableCell alloc] init];
-        [cell setTitle:[layouts objectForKey:[layoutIDs objectAtIndex:row]]];
-        [cell setChecked:[[layoutIDs objectAtIndex:row] isEqualToString:[defaults objectForKey:@"KeyboardLayout"]]];
+        if (row < [layoutIDs count]) {
+            // keyboard layout
+            cell = [[UIPreferencesTableCell alloc] init];
+            [cell setTitle:[layouts objectForKey:[layoutIDs objectAtIndex:row]]];
+            [cell setChecked:[[layoutIDs objectAtIndex:row] isEqualToString:[defaults objectForKey:@"KeyboardLayout"]]];
+        } else {
+            // keyboard alpha
+            cell = [[UIPreferencesControlTableCell alloc] init];
+            [cell setTitle:@"Opacity"];
+            [cell setShowSelection:NO];
+            UISliderControl * sc = [[UISliderControl alloc] initWithFrame: CGRectMake(86.0f, 4.0f, 140.0f, 40.0f)];
+            [sc addTarget:self action:@selector(keyboardAlphaChanged:) forEvents:7|64];
+            [sc setAllowsTickMarkValuesOnly:NO];
+            [sc setMinValue:0.2];
+            [sc setMaxValue:1.0];
+            [sc setValue: [defaults floatForKey:@"KeyboardAlpha"]];
+            [sc setShowValue:YES];
+            [sc setContinuous:YES];
+            [cell setControl:[sc autorelease]];
+        }
     }
     
     return [cell autorelease];
@@ -157,7 +176,7 @@ extern NSString *kUIButtonBarButtonType;
     int group, row;
     [table getGroup:&group row:&row forTableRow:[table selectedRow]];
     
-    if (group == settingsGroupKeyboard) {
+    if (group == settingsGroupKeyboard && (row < [layoutIDs count])) {
         [defaults setObject:[layoutIDs objectAtIndex:row] forKey:@"KeyboardLayout"];
         [defaults synchronize];
         [self notifyPrefsUpdate];
@@ -165,4 +184,9 @@ extern NSString *kUIButtonBarButtonType;
     }
 }
 
+- (void)keyboardAlphaChanged:(UISliderControl*)slider {
+    [defaults setFloat:[slider value] forKey:@"KeyboardAlpha"];
+    [defaults synchronize];
+    [self notifyPrefsUpdate];
+}
 @end

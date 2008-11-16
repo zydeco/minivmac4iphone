@@ -15,6 +15,7 @@
         
         [self setUserInteractionEnabled: YES];
         [self loadImages];
+        [self setAlpha:[[NSUserDefaults standardUserDefaults] floatForKey:@"KeyboardAlpha"]];
         
         // notification
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didChangePreferences:) name:@"preferencesUpdated" object:nil];
@@ -103,6 +104,7 @@
 - (void)didChangePreferences:(NSNotification *)aNotification {
     NSUserDefaults * defaults = [NSUserDefaults standardUserDefaults];
     self.layout = [defaults objectForKey:@"KeyboardLayout"];
+    [self setAlpha: [defaults floatForKey:@"KeyboardAlpha"]];
 }
 
 - (void)addKeys:(NSDictionary*)keys {
