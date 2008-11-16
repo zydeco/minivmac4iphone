@@ -9,7 +9,7 @@
         // Initialization code
         
         for (int i = 0; i < 2; i++) {
-            keyboard[i] = [[[UIImageView alloc] initWithImage:[UIImage imageNamed:@"KBArtwork/KBBackground.png"]] retain];
+            keyboard[i] = [[[UIImageView alloc] initWithImage:[UIImage imageNamed:@"KBBackground.png"]] retain];
             [keyboard[i] setUserInteractionEnabled: YES];
         }
         
