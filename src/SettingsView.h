@@ -15,6 +15,7 @@ typedef enum {
 @interface SettingsView : UIView {
     UINavigationBar *       navBar;
     UIPreferencesTable *    table;
+    UIToolbar *             toolbar;
     NSUserDefaults *        defaults;
     
     NSDictionary *          layouts;

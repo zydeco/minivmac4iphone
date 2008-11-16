@@ -1,6 +1,18 @@
 #import "SettingsView.h"
 #import "vMacApp.h"
 
+extern NSString *kUIButtonBarButtonAction;
+extern NSString *kUIButtonBarButtonInfo;
+extern NSString *kUIButtonBarButtonInfoOffset;
+extern NSString *kUIButtonBarButtonSelectedInfo;
+extern NSString *kUIButtonBarButtonStyle;
+extern NSString *kUIButtonBarButtonTag;
+extern NSString *kUIButtonBarButtonTarget;
+extern NSString *kUIButtonBarButtonTitle;
+extern NSString *kUIButtonBarButtonTitleVerticalHeight;
+extern NSString *kUIButtonBarButtonTitleWidth;
+extern NSString *kUIButtonBarButtonType;
+
 @implementation SettingsView
 
 - (id)initWithFrame:(CGRect)frame {
@@ -19,11 +31,37 @@
         [navItem autorelease];
         
         // create table
-        CGRect tableRect = CGRectMake(0.0, 48.0, frame.size.width, frame.size.height-48.0);
+        CGRect tableRect = CGRectMake(0.0, 48.0, frame.size.width, frame.size.height-92.0);
         table = [[UIPreferencesTable alloc] initWithFrame: tableRect];
         [table setDelegate: self];
         [table setDataSource: self];
         [self addSubview: table];
+        
+        // create toolbar
+        CGRect toolbarRect = CGRectMake(0.0, 320.0-44.0, frame.size.width, 44.0);
+        NSArray *buttonBarButtons = [NSArray arrayWithObjects:
+            [NSDictionary dictionaryWithObjectsAndKeys:
+                self,                                   kUIButtonBarButtonTarget,
+                @"buttonBarItemTapped:",                kUIButtonBarButtonAction,
+                [NSNumber numberWithUnsignedInt:1],     kUIButtonBarButtonTag,
+                [NSNumber numberWithUnsignedInt:0],     kUIButtonBarButtonStyle,
+                [NSNumber numberWithUnsignedInt:2],     kUIButtonBarButtonType,
+                [UIImage imageNamed:@"PSInterrupt.png"],kUIButtonBarButtonInfo,
+                nil],
+            [NSDictionary dictionaryWithObjectsAndKeys:
+                self,                                   kUIButtonBarButtonTarget,
+                @"buttonBarItemTapped:",                kUIButtonBarButtonAction,
+                [NSNumber numberWithUnsignedInt:2],     kUIButtonBarButtonTag,
+                [NSNumber numberWithUnsignedInt:0],     kUIButtonBarButtonStyle,
+                [NSNumber numberWithUnsignedInt:2],     kUIButtonBarButtonType,
+                [UIImage imageNamed:@"PSReset.png"],    kUIButtonBarButtonInfo,
+                nil],
+            nil];
+        toolbar = [[UIToolbar alloc] initInView:self withFrame:toolbarRect withItemList:buttonBarButtons];
+        [toolbar setBarStyle: 2];
+        int buttonTags[] = {1, 2}; 
+        [toolbar registerButtonGroup: 0 withButtons: buttonTags withCount: 2];
+        [toolbar showButtonGroup: 0 withDuration: 0.0];
     }
     return self;
 }
@@ -57,7 +95,7 @@
 
 #if 0
 #pragma mark -
-#pragma mark Navigation Bar Delegate
+#pragma mark Navigation Bar & Toolbar
 #endif
 
 - (void)navigationBar:(UINavigationBar *)navbar buttonClicked:(int)button {
@@ -65,6 +103,16 @@
     [self hide];
 }
 
+- (void)buttonBarItemTapped:(id)sender {
+    switch([sender tag]) {
+        case 1: // Interrupt
+            WantMacInterrupt = YES;
+            break;
+        case 2: // Reset
+            WantMacReset = YES;
+            break;
+    }
+}
 
 #if 0
 #pragma mark -
