@@ -9,15 +9,17 @@
         [self setBackgroundColor:[UIColor blackColor]];
         
         // add screen view
-        NSString* scalingFilter = kCAFilterNearest;
-        if ([defaults boolForKey:@"ScreenAntialiasing"]) scalingFilter = kCAFilterLinear;
-        screenView = [[SurfaceView alloc] initWithFrame:CGRectMake(0, 0, 480, 320) pixelFormat:kPixelFormat565L surfaceSize:CGSizeMake(512, 342) scalingFilter:scalingFilter];
+        CGRect screenRect;
+        if ([defaults boolForKey:@"ScreenSizeToFit"]) screenRect = kScreenRectFullScreen;
+        else screenRect = kScreenRectRealSize;
+        screenView = [[SurfaceView alloc] initWithFrame:screenRect pixelFormat:kPixelFormat565L surfaceSize:CGSizeMake(512, 342) scalingFilter:kCAFilterLinear];
         [self addSubview:screenView];
         [screenView setUserInteractionEnabled:NO];
         _gScreenView = screenView;
         SurfaceScrnBuf = [screenView pixels];
-        screenSizeToFit = ![defaults boolForKey:@"ScreenSizeToFit"];
-        [self toggleScreenSize]; // ugly, I know
+        screenSizeToFit = [defaults boolForKey:@"ScreenSizeToFit"];
+        screenPosition = [defaults integerForKey:@"ScreenPosition"];
+        [self scrollScreenViewTo:screenPosition];
         mouseOffset.h = mouseOffset.v = 0;
         
         // add keyboard view
@@ -53,12 +55,12 @@
         CGPoint tapLoc = GSEventGetLocationInWindow(event).origin;
         CGPoint screenLoc = [screenView frame].origin;
         Direction scrollTo = 0;
-        if (tapLoc.x < SCREEN_EDGE_SIZE && screenLoc.x != 0.0) scrollTo |= dirLeft;
-        if (tapLoc.y < SCREEN_EDGE_SIZE && screenLoc.y != 0.0) scrollTo |= dirUp;
-        if (tapLoc.x > (480-SCREEN_EDGE_SIZE) && screenLoc.x == 0.0) scrollTo |= dirRight;
-        if (tapLoc.y > (320-SCREEN_EDGE_SIZE) && screenLoc.y == 0.0) scrollTo |= dirDown;
+        if (tapLoc.x < kScreenEdgeSize && screenLoc.x != 0.0) scrollTo |= dirLeft;
+        if (tapLoc.y < kScreenEdgeSize && screenLoc.y != 0.0) scrollTo |= dirUp;
+        if (tapLoc.x > (480-kScreenEdgeSize) && screenLoc.x == 0.0) scrollTo |= dirRight;
+        if (tapLoc.y > (320-kScreenEdgeSize) && screenLoc.y == 0.0) scrollTo |= dirDown;
         if (scrollTo) {
-            [self scrollScreenView:scrollTo];
+            [self scrollScreenViewTo:scrollTo];
             return;
         }
     }
@@ -73,7 +75,7 @@
     NSTimeInterval mouseTime = GSEventGetTimestamp(event);
     // help double clicking: click in the same place if it was fast and near
     if (((mouseTime - lastMouseTime) < MOUSE_DBLCLICK_TIME) &&
-        (PointDistanceSq(loc, lastMouseLoc) < MOUSE_LOC_TRESHOLD)) {
+        (PointDistanceSq(loc, lastMouseLoc) < MOUSE_LOC_THRESHOLD)) {
         loc = lastMouseLoc;
     }
     lastMouseLoc = loc;
@@ -90,7 +92,7 @@
     
     #if defined(MOUSE_DBLCLICK_HELPER) && MOUSE_DBLCLICK_HELPER
     // mouseUp in the same place if it's near enough
-    if (PointDistanceSq(loc, lastMouseLoc) < MOUSE_LOC_TRESHOLD) {
+    if (PointDistanceSq(loc, lastMouseLoc) < MOUSE_LOC_THRESHOLD) {
         loc = lastMouseLoc;
     }
     lastMouseLoc = loc;
@@ -135,35 +137,32 @@
 #endif
 
 - (void)toggleScreenSize {
+    [UIView beginAnimations:nil context:nil];
     NSUserDefaults * defaults = [NSUserDefaults standardUserDefaults];
     screenSizeToFit =! screenSizeToFit;
-    if (screenSizeToFit) [screenView setFrame: CGRectMake(0, 0, 480, 320)];
-    else [screenView setFrame: CGRectMake(0, 0, 512, 342)];
+    if (screenSizeToFit) [screenView setFrame: kScreenRectFullScreen];
+    else {
+        [screenView setFrame: kScreenRectRealSize];
+        [self scrollScreenViewTo: screenPosition];
+    }
+    [UIView endAnimations];
     [defaults setBool:screenSizeToFit forKey:@"ScreenSizeToFit"];
     [defaults synchronize];
 }
 
-- (void)toggleScreenScalingFilter {
-    NSUserDefaults * defaults = [NSUserDefaults standardUserDefaults];
-    if ([screenView.minificationFilter isEqual:kCAFilterLinear]) {
-        screenView.minificationFilter =  kCAFilterNearest;
-        screenView.magnificationFilter = kCAFilterNearest;
-        [defaults setBool:NO forKey:@"ScreenAntialiasing"];
-    } else {
-        screenView.minificationFilter =  kCAFilterLinear;
-        screenView.magnificationFilter = kCAFilterLinear;
-        [defaults setBool:YES forKey:@"ScreenAntialiasing"];
-    }
-    [defaults synchronize];
-}
-
-- (void)scrollScreenView:(Direction)scroll {
+- (void)scrollScreenViewTo:(Direction)scroll {
     // calculate new position
     CGRect screenFrame = screenView.frame;
     if (scroll & dirDown) screenFrame.origin.y = 320-342;
     else if (scroll & dirUp) screenFrame.origin.y = 0.0;
     if (scroll & dirLeft) screenFrame.origin.x = 0.0;
     else if (scroll & dirRight) screenFrame.origin.x = 480-512;
+    if (scroll != screenPosition) {
+        screenPosition = scroll;
+        NSUserDefaults * defaults = [NSUserDefaults standardUserDefaults];
+        [defaults setInteger:screenPosition forKey:@"ScreenPosition"];
+        [defaults synchronize];
+    }
     
     // set mouse offset
     mouseOffset.h = screenFrame.origin.x;
@@ -200,16 +199,16 @@
     // process gesture (relative to landscape orientation)
     Direction swipeDirection = 0;
     CGPoint delta = CGPointMake(gestureStart.x-gestureEnd.x, gestureStart.y-gestureEnd.y);
-    if (delta.x > 100.0)    swipeDirection |= dirLeft;
-    if (delta.x < -100.0)   swipeDirection |= dirRight;
-    if (delta.y > 70.0)    swipeDirection |= dirUp;
-    if (delta.y < -70.0)   swipeDirection |= dirDown;
+    if (delta.x > kSwipeThresholdHorizontal)  swipeDirection |= dirLeft;
+    if (delta.x < -kSwipeThresholdHorizontal) swipeDirection |= dirRight;
+    if (delta.y > kSwipeThresholdVertical)    swipeDirection |= dirUp;
+    if (delta.y < -kSwipeThresholdVertical)   swipeDirection |= dirDown;
     
-    if (swipeDirection) [self swipeGesture:swipeDirection];
+    if (swipeDirection) [self twoFingerSwipeGesture:swipeDirection];
     else [self twoFingerTapGesture:event];
 }
 
-- (void)swipeGesture:(Direction)direction {
+- (void)twoFingerSwipeGesture:(Direction)direction {
     if (direction == dirDown)
         [keyboardView hide];
     else if (direction == dirUp)
@@ -221,15 +220,7 @@
 }
 
 - (void)twoFingerTapGesture:(GSEvent *)event {
-    if (gestureTaps == 0)
-        [self performSelector:@selector(twoFingerTapGestureDone) withObject:nil afterDelay:MOUSE_DBLCLICK_TIME];
-    gestureTaps++;
-}
-
-- (void)twoFingerTapGestureDone {
-    if (gestureTaps == 1) [self toggleScreenSize];
-    if (gestureTaps == 2) [self toggleScreenScalingFilter];
-    gestureTaps = 0;
+    [self toggleScreenSize];
 }
 
 @end

@@ -5,6 +5,9 @@
 #import "InsertDiskView.h"
 #import "SettingsView.h"
 
+#define kSwipeThresholdHorizontal   100.0
+#define kSwipeThresholdVertical     70.0
+
 @interface MainView : UIView
 {
     SurfaceView*    screenView;
@@ -14,6 +17,7 @@
     
     // screen
     BOOL            screenSizeToFit;
+    Direction       screenPosition;
     
     // mouse
     NSTimeInterval  lastMouseTime;
@@ -21,17 +25,14 @@
     Point           mouseOffset;
     // gesture
     CGPoint         gestureStart;
-    NSInteger       gestureTaps;
 }
 
 - (Point)mouseLocForEvent:(GSEvent *)event;
 
 - (void)toggleScreenSize;
-- (void)toggleScreenScalingFilter;
-- (void)scrollScreenView:(Direction)scroll;
+- (void)scrollScreenViewTo:(Direction)scroll;
 
-- (void)swipeGesture:(Direction)direction;
+- (void)twoFingerSwipeGesture:(Direction)direction;
 - (void)twoFingerTapGesture:(GSEvent *)event;
-- (void)twoFingerTapGestureDone;
 
 @end

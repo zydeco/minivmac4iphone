@@ -54,12 +54,12 @@ vMacApp* _vmacAppSharedInstance = nil;
     NSUserDefaults * defaults = [NSUserDefaults standardUserDefaults];
     if ([defaults stringForKey:@"KeyboardLayout"] == nil)
         [defaults setObject:@"US" forKey:@"KeyboardLayout"];
-    if ([defaults objectForKey:@"ScreenAntialias"] == nil)
-        [defaults setBool:YES forKey:@"ScreenAntialias"];
     if ([defaults objectForKey:@"ScreenSizeToFit"] == nil)
         [defaults setBool:YES forKey:@"ScreenSizeToFit"];
     if ([defaults objectForKey:@"KeyboardAlpha"] == nil)
         [defaults setFloat:0.8 forKey:@"KeyboardAlpha"];
+    if ([defaults objectForKey:@"ScreenPosition"] == nil)
+        [defaults setInteger:dirUp|dirLeft forKey:@"ScreenPosition"];
     [defaults synchronize];
 }
 
