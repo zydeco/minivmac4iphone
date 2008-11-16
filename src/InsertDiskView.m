@@ -109,7 +109,8 @@
     else [cell setIcon:[UIImage imageNamed:@"DiskListHD.png"]];
     
     // set title
-    [cell setTitle:[diskPath lastPathComponent]];
+    NSString *diskTitle = [[diskPath lastPathComponent] stringByDeletingPathExtension];
+    [cell setTitle:diskTitle];
     
     // enable?
     if ([diskDrive diskIsInserted:[diskFiles objectAtIndex:row]])
