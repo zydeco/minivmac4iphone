@@ -1,6 +1,6 @@
 PROD = minivmac
 APP  = minivmac.app
-VERSION=1.0
+VERSION=1.0.1
 
 MNVM = ADDRSPAC.o \
        GLOBGLUE.o \
@@ -62,7 +62,7 @@ $(PROD): $(OBJS)
 %.o:	src/mnvm/%.c
 	$(CC) -c $(CFLAGS) $< -o $@
 
-app:
+app: $(PROD)
 	rm -rf build
 	mkdir build
 	mkdir build/$(APP)
