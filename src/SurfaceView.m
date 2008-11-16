@@ -171,12 +171,12 @@ PixelFormat kPixelFormat804V = "804V";
 }
 
 - (CGRect)fixFrame: (CGRect)frame {
-    // CoreSurface is sofa king buggy
+    // fix CoreSurface bugginess
     int p = self.pixelSize;
     frame.origin.x /= p;
     frame.origin.y /= p;
-    if (frame.size.height == surfaceSize.height) frame.size.height += 1;
-    if (frame.size.width == surfaceSize.width) frame.size.width += 1;
+    /*if (frame.size.height == surfaceSize.height && frame.size.width == surfaceSize.width)
+        frame.size.height += 1;*/
     return frame;
 }
 
