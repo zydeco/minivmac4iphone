@@ -1,0 +1,10 @@
+Package: net.namedfork.minivmac
+Name: Mini vMac
+Version: $VERSION
+Architecture: iphoneos-arm
+Description: Mini vMac Mac Plus emulator
+Homepage: http://namedfork.net/iphone/minivmac
+Maintainer: Jesus A. Alvarez <zydeco@namedfork.net>
+Author: Jesus A. Alvarez <zydeco@namedfork.net>
+Section: Emulation
+Icon: file:///Applications/minivmac.app/Icon.png
