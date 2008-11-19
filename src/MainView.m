@@ -151,6 +151,7 @@
 }
 
 - (void)scrollScreenViewTo:(Direction)scroll {
+    if (screenSizeToFit) return;
     // calculate new position
     CGRect screenFrame = screenView.frame;
     if (scroll & dirDown) screenFrame.origin.y = 320-342;
