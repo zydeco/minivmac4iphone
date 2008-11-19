@@ -57,18 +57,13 @@
 
 - (void)findDiskFiles {
     NSFileManager* fm = [NSFileManager defaultManager];
-    
-    // sources
-    NSArray*    sources = [NSArray arrayWithObjects:
-                                [[NSBundle mainBundle] bundlePath],
-                                [NSHomeDirectory() stringByAppendingPathComponent:@"Library/MacOSClassic"],
-                                @"/Library/MacOSClassic",
-                                nil];
+    NSArray* sources = [[vMacApp sharedInstance] searchPaths];
+    NSArray* extensions = [NSArray arrayWithObjects: @"dsk", @"img", @"DSK", @"IMG", nil];
     
     NSMutableArray* myDiskFiles = [NSMutableArray arrayWithCapacity:10];
     for(NSString *srcDir in sources) {
-        NSArray *dirFiles = [fm contentsOfDirectoryAtPath:srcDir error:NULL];
-        for(NSString *filename in dirFiles) if ([filename hasSuffix:@".dsk"] || [filename hasSuffix:@".img"])
+        NSArray *dirFiles = [[fm contentsOfDirectoryAtPath:srcDir error:NULL] pathsMatchingExtensions:extensions];
+        for(NSString *filename in dirFiles)
             [myDiskFiles addObject:[srcDir stringByAppendingPathComponent: filename]];
     }
     
