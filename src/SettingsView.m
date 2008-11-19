@@ -114,6 +114,7 @@ extern NSString *kUIButtonBarButtonType;
             WantMacReset = YES;
             break;
     }
+    [self hide];
 }
 
 #if 0
