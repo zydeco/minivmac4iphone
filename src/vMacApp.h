@@ -60,6 +60,7 @@ typedef enum Direction {
     NSFileHandle*   drives[NumDrives];
     NSString*       drivePath[NumDrives];
     NSData*         romData;
+    NSArray*        searchPaths;
     
     CFRunLoopTimerRef   tickTimer;
     CFAbsoluteTime      aTimeBase;
@@ -69,6 +70,7 @@ typedef enum Direction {
 + (id)sharedInstance;
 
 - (void)initPreferences;
+- (NSArray*)searchPaths;
 - (void)warnMessage:(NSString *)message;
 - (BOOL)initDrives;
 - (BOOL)loadROM;

@@ -24,6 +24,7 @@
         
         // add keyboard view
         keyboardView = [[KeyboardView alloc] initWithFrame:KeyboardViewFrameHidden];
+        keyboardView.searchPaths = [[vMacApp sharedInstance] searchPaths];
         keyboardView.layout = [defaults objectForKey:@"KeyboardLayout"];
         [self addSubview:keyboardView];
         keyboardView.delegate = [vMacApp sharedInstance];

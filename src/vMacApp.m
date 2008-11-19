@@ -14,6 +14,11 @@ vMacApp* _vmacAppSharedInstance = nil;
     
     // initialize stuff
     openAlerts = [[NSMutableSet setWithCapacity:5] retain];
+    searchPaths = [[NSArray arrayWithObjects:
+                    [[NSBundle mainBundle] resourcePath],
+                    [NSHomeDirectory() stringByAppendingPathComponent:@"Library/MacOSClassic"],
+                    @"/Library/MacOSClassic",
+                    nil] retain];
     initOk = [self initEmulation];
     
     // initialize defaults
@@ -35,6 +40,7 @@ vMacApp* _vmacAppSharedInstance = nil;
     [window release];
     [openAlerts release];
     [romData release];
+    [searchPaths release];
     [super dealloc];
 }
 
@@ -61,6 +67,10 @@ vMacApp* _vmacAppSharedInstance = nil;
     if ([defaults objectForKey:@"ScreenPosition"] == nil)
         [defaults setInteger:dirUp|dirLeft forKey:@"ScreenPosition"];
     [defaults synchronize];
+}
+
+- (NSArray*)searchPaths {
+    return searchPaths;
 }
 
 #if 0
@@ -117,12 +127,14 @@ vMacApp* _vmacAppSharedInstance = nil;
 - (NSDictionary*)availableKeyboardLayouts {
     NSMutableDictionary* layouts = [NSMutableDictionary dictionaryWithCapacity:5];
     NSFileManager* fm = [NSFileManager defaultManager];
-    NSArray *resources = [fm contentsOfDirectoryAtPath:[[NSBundle mainBundle] resourcePath] error:NULL];
+    NSArray* sources = [self searchPaths];
+    NSArray* extensions = [NSArray arrayWithObject:@"kbdlayout"];
     
-    for(NSString* file in resources) {
-        if ([file hasSuffix:@".kbdlayout"]) {
+    for(NSString* dir in sources) {
+        NSArray* files = [[fm contentsOfDirectoryAtPath:dir error:NULL] pathsMatchingExtensions:extensions];
+        for(NSString* file in files) {
             NSString* layoutID = [file stringByDeletingPathExtension];
-            NSDictionary* kbFile = [NSDictionary dictionaryWithContentsOfFile:[[NSBundle mainBundle] pathForResource:layoutID ofType:@"kbdlayout"]];
+            NSDictionary* kbFile = [NSDictionary dictionaryWithContentsOfFile:[dir stringByAppendingPathComponent:file]];
             NSString* layoutName = [kbFile objectForKey:@"Name"];
             [layouts setObject:layoutName forKey:layoutID];
         }
@@ -242,12 +254,7 @@ vMacApp* _vmacAppSharedInstance = nil;
     NSString*   romPath = nil;
     NSString*   romFileName = [NSString stringWithUTF8String:RomFileName];
     NSFileManager* fm = [NSFileManager defaultManager];
-    NSArray*    romSearchPaths = [NSArray arrayWithObjects:
-                                        [[NSBundle mainBundle] resourcePath],
-                                        [NSHomeDirectory() stringByAppendingPathComponent:@"Library/MacOSClassic"],
-                                        @"/Library/MacOSClassic",
-                                        [NSHomeDirectory() stringByAppendingPathComponent:@"Media/ROMs"],
-                                        nil];
+    NSArray*    romSearchPaths = [self searchPaths];
     
     for(NSString* p in romSearchPaths) {
         romPath = [p stringByAppendingPathComponent:romFileName];
