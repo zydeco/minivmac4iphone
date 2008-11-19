@@ -19,10 +19,12 @@
     NSArray     *keyMap[2], *currentKeyMap;
     BOOL        stickyKeyDown[3]; // shift, option, command
     NSString    *layout;
+    NSArray     *searchPaths;
 }
 
 @property (nonatomic, assign) id <VirtualKeyboard> delegate;
 @property (nonatomic, retain) NSString* layout;
+@property (nonatomic, retain) NSArray* searchPaths;
 
 - (void)loadImages;
 - (void)hide;

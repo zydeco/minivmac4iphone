@@ -3,6 +3,7 @@
 @implementation KeyboardView
 
 @synthesize delegate;
+@synthesize searchPaths;
 
 - (id)initWithFrame:(CGRect)frame {
     if (self = [super initWithFrame:frame]) {
@@ -16,6 +17,7 @@
         [self setUserInteractionEnabled: YES];
         [self loadImages];
         [self setAlpha:[[NSUserDefaults standardUserDefaults] floatForKey:@"KeyboardAlpha"]];
+        [self setSearchPaths:[NSArray arrayWithObject:[[NSBundle mainBundle] resourcePath]]];
         
         // notification
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didChangePreferences:) name:@"preferencesUpdated" object:nil];
@@ -74,7 +76,18 @@
     if ([newLayout isEqualToString:layout]) return;
     if (layout) [self removeLayout];
     layout = [newLayout retain];
-    NSDictionary* kbFile = [NSDictionary dictionaryWithContentsOfFile:[[NSBundle mainBundle] pathForResource:newLayout ofType:@"kbdlayout"]];
+    
+    // find file
+    NSString* layoutFileName = [newLayout stringByAppendingPathExtension:@"kbdlayout"];
+    NSString* layoutPath = nil;
+    NSFileManager* fm = [NSFileManager defaultManager];
+    for(NSString* basePath in searchPaths) {
+        if ([fm fileExistsAtPath:[basePath stringByAppendingPathComponent:layoutFileName]])
+            layoutPath = [basePath stringByAppendingPathComponent:layoutFileName];
+    }
+    
+    // set layout
+    NSDictionary* kbFile = [NSDictionary dictionaryWithContentsOfFile:layoutPath];
     if (kbFile == nil) {
         // we enter an infinite loop if there is no US.kbdlayout file
         // this would be easy to fix, but US.kbdlayout is a requirement
