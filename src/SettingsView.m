@@ -129,15 +129,19 @@ extern NSString *kUIButtonBarButtonType;
 - (int)preferencesTable:(UIPreferencesTable*)aTable numberOfRowsInGroup:(int)group {
     if (group == settingsGroupKeyboard)
         return [layouts count] + 1;
+    else if (group == settingsGroupVersion)
+        return 1;
 }
 
 - (UIPreferencesTableCell*)preferencesTable:(UIPreferencesTable*)aTable cellForGroup:(int)group {
-    UIPreferencesTableCell * cell = [[UIPreferencesTableCell alloc] init];
+    UIPreferencesTableCell * cell = [[[UIPreferencesTableCell alloc] init] autorelease];
     
     if (group == settingsGroupKeyboard)
         [cell setTitle:@"Keyboard"];
+    else
+        cell = nil;
     
-    return [cell autorelease];
+    return cell;
 }
 
 - (UIPreferencesTableCell*)preferencesTable:(UIPreferencesTable*)aTable cellForRow:(int)row inGroup:(int)group {
@@ -164,6 +168,10 @@ extern NSString *kUIButtonBarButtonType;
             [sc setContinuous:YES];
             [cell setControl:[sc autorelease]];
         }
+    } else if (group == settingsGroupVersion) {
+        cell = [[UIPreferencesTableCell alloc] init];
+        NSString* bundleVersion = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"];
+        [cell setTitle:[NSString stringWithFormat:@"Mini vMac for iPhone %@\n©2008 namedfork.net", bundleVersion]];
     }
     
     return [cell autorelease];
@@ -171,6 +179,18 @@ extern NSString *kUIButtonBarButtonType;
 
 - (float)preferencesTable:(UIPreferencesTable*)aTable heightForRow:(int)row inGroup:(int)group withProposedHeight:(float)proposed {
     return 48.0;
+}
+
+- (BOOL)preferencesTable:(UIPreferencesTable*)aTable isLabelGroup:(int)group {
+    switch(group) {
+        case settingsGroupVersion: return YES;
+        default: return NO;
+    }
+}
+
+- (BOOL)table:(UIPreferencesTable*)aTable canSelectRow:(int)row {
+    if ([aTable groupForTableRow:row] == settingsGroupVersion) return NO;
+    return YES;
 }
 
 - (void)tableRowSelected:(NSNotification*)notification {
