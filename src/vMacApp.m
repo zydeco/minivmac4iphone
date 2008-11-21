@@ -3,6 +3,11 @@
 
 vMacApp* _vmacAppSharedInstance = nil;
 
+GLOBALPROC notifyDiskEjected(ui4b Drive_No);
+GLOBALPROC notifyDiskInserted(ui4b Drive_No, blnr locked);
+GLOBALFUNC blnr getFirstFreeDisk(ui4b *Drive_No);
+IMPORTFUNC blnr InitEmulation(void);
+
 @implementation vMacApp
 
 + (id)sharedInstance {
@@ -174,7 +179,7 @@ vMacApp* _vmacAppSharedInstance = nil;
     short i, driveNum;
     NSFileManager*  mgr = [NSFileManager defaultManager];
     // check for free drive
-    if (!FirstFreeDisk(&driveNum)) return NO;
+    if (!getFirstFreeDisk(&driveNum)) return NO;
     // check for file
     if ([mgr fileExistsAtPath:path isDirectory:&isDir] == NO) return NO;
     if (isDir) return NO;
@@ -183,11 +188,10 @@ vMacApp* _vmacAppSharedInstance = nil;
     // insert disk
     if ([mgr isWritableFileAtPath:path]) {
         drives[driveNum] = [[NSFileHandle fileHandleForUpdatingAtPath:path] retain];
-        // @todo unlock images in a future version
-        DiskInsertNotify(driveNum, falseblnr);
+        notifyDiskInserted(driveNum, falseblnr);
     } else {
         drives[driveNum] = [[NSFileHandle fileHandleForReadingAtPath:path] retain];
-        DiskInsertNotify(driveNum, trueblnr);
+        notifyDiskInserted(driveNum, trueblnr);
     }
     drivePath[driveNum] = [path retain];
     numInsertedDisks++;
@@ -219,7 +223,7 @@ vMacApp* _vmacAppSharedInstance = nil;
     drivePath[n] = nil;
     numInsertedDisks--;
     
-    DiskEjectedNotify(n);
+    notifyDiskEjected(n);
     
     [fh closeFile];
     [fh release];

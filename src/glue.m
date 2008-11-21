@@ -23,10 +23,11 @@
 #import "DATE2SEC.h"
 
 blnr SpeedStopped = YES;
-blnr ScreenNeedsUpdate = YES;
 NSInteger numInsertedDisks;
 short* SurfaceScrnBuf;
 id _gScreenView;
+IMPORTFUNC blnr ScreenFindChanges(si3b TimeAdjust,
+    si4b *top, si4b *left, si4b *bottom, si4b *right);
 
 #if 0
 #pragma mark -
@@ -65,16 +66,12 @@ GLOBALFUNC blnr ExtraTimeNotOver(void)
     return falseblnr;
 }
 
-GLOBALPROC HaveChangedScreenBuff(si4b top, si4b left, si4b bottom, si4b right)
-{
-    ScreenNeedsUpdate = trueblnr;
-}
-
 void updateScreen (CFRunLoopTimerRef timer, void* info)
 {
-    Screen_Draw(MyFrameSkip);
-    if (!ScreenNeedsUpdate) return;
-    ScreenNeedsUpdate = falseblnr;
+    si4b top, left, bottom, right;
+    
+    // has the screen changed?
+    if (!ScreenFindChanges(MyFrameSkip, &top, &left, &bottom, &right)) return;
     
     // convert the pixels
     char *vmacScrnBuf = screencomparebuff;

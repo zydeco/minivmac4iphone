@@ -1,3 +1,4 @@
+#include <string.h>
 
 #define BigEndianUnaligned 0
 #define MayInline inline
@@ -5,6 +6,7 @@
 
 #define cIncludeUnused 0
 
+#define MyFrameSkip 3
 #define MySoundEnabled 0
 #define CurEmu kEmuPlus
 #define NumDrives 8
@@ -15,10 +17,3 @@
 #define IncludeSonyNew 0
 #define IncludeSonyNameNew 0
 #define IncludeHostTextClipExchange 0
-
-#define kStrAppName "Mini vMac"
-#define kAppVariationStr "minivmac-3.0.4-iphone"
-#define kStrCopyrightYear "2007"
-#define kMaintainerName "Jesus A. Alvarez"
-#define kStrHomePage "http://namedfork.net"
-

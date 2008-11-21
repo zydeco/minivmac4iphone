@@ -6,8 +6,9 @@
 #import "SYSDEPNS.h"
 #import "MYOSGLUE.h"
 #import "PROGMAIN.h"
+#import "DATE2SEC.h"
+#import "CNFGGLOB.h"
 
-#define MyFrameSkip 3
 #define MyTickDuration (1/60.14742)
 
 #define PointDistanceSq(a, b) ((((int)a.h-(int)b.h)*((int)a.h-(int)b.h)) + (((int)a.v-(int)b.v)*((int)a.v-(int)b.v)))
@@ -15,7 +16,7 @@
 #define MOUSE_DBLCLICK_HELPER   1       // enable double-click assistance
 #define MOUSE_DBLCLICK_TIME     0.7     // seconds, NSTimeInterval
 #define MOUSE_CLICK_DELAY       0.05    // seconds, NSTimeInterval
-#define MOUSE_LOC_THRESHOLD      100     // pixel distance in mac screen, squared, integer
+#define MOUSE_LOC_THRESHOLD     100     // pixel distance in mac screen, squared, integer
 #define kScreenEdgeSize         20      // edge size for scrolling
 #define kScreenRectFullScreen   CGRectMake(0.f, 0.f, 480.f, 320.f)
 #define kScreenRectRealSize     CGRectMake(0.f, 0.f, 512.f, 342.f)
@@ -80,6 +81,8 @@ typedef enum Direction {
 - (void)suspendEmulation;
 - (void)resumeEmulation;
 @end
+
+#define RomFileName "vMac.ROM"
 
 extern vMacApp* _vmacAppSharedInstance;
 extern NSInteger numInsertedDisks;
