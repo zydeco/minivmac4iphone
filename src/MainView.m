@@ -12,7 +12,7 @@
         CGRect screenRect;
         if ([defaults boolForKey:@"ScreenSizeToFit"]) screenRect = kScreenRectFullScreen;
         else screenRect = kScreenRectRealSize;
-        screenView = [[SurfaceView alloc] initWithFrame:screenRect pixelFormat:kPixelFormat565L surfaceSize:CGSizeMake(512, 342) scalingFilter:kCAFilterLinear];
+        screenView = [[SurfaceView alloc] initWithFrame:screenRect pixelFormat:kPixelFormat565L surfaceSize:CGSizeMake(vMacScreenWidth, vMacScreenHeight) scalingFilter:kCAFilterLinear];
         [self addSubview:screenView];
         [screenView setUserInteractionEnabled:NO];
         _gScreenView = screenView;
@@ -155,10 +155,10 @@
     if (screenSizeToFit) return;
     // calculate new position
     CGRect screenFrame = screenView.frame;
-    if (scroll & dirDown) screenFrame.origin.y = 320-342;
+    if (scroll & dirDown) screenFrame.origin.y = 320-vMacScreenHeight;
     else if (scroll & dirUp) screenFrame.origin.y = 0.0;
     if (scroll & dirLeft) screenFrame.origin.x = 0.0;
-    else if (scroll & dirRight) screenFrame.origin.x = 480-512;
+    else if (scroll & dirRight) screenFrame.origin.x = 480-vMacScreenWidth;
     if (scroll != screenPosition) {
         screenPosition = scroll;
         NSUserDefaults * defaults = [NSUserDefaults standardUserDefaults];
