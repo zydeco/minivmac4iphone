@@ -25,6 +25,7 @@
 blnr SpeedStopped = YES;
 NSInteger numInsertedDisks;
 short* SurfaceScrnBuf;
+short* pixelConversionTable;
 id _gScreenView;
 IMPORTFUNC blnr ScreenFindChanges(si3b TimeAdjust,
     si4b *top, si4b *left, si4b *bottom, si4b *right);
@@ -66,6 +67,11 @@ GLOBALFUNC blnr ExtraTimeNotOver(void)
     return falseblnr;
 }
 
+#if 0
+#pragma mark -
+#pragma mark Screen
+#endif
+
 void updateScreen (CFRunLoopTimerRef timer, void* info)
 {
     si4b top, left, bottom, right;
@@ -74,19 +80,13 @@ void updateScreen (CFRunLoopTimerRef timer, void* info)
     if (!ScreenFindChanges(MyFrameSkip, &top, &left, &bottom, &right)) return;
     
     // convert the pixels
-    char *vmacScrnBuf = screencomparebuff;
+    unsigned char *vmacScrnBuf = screencomparebuff;
     short *scrnBuf = SurfaceScrnBuf;
     register int currentPixels;
-    for(register int i=0; i < (vMacScreenWidth*vMacScreenHeight)/8; i++) {
+    for(register int i=0; i < vMacScreenNumBytes; i++) {
         currentPixels = vmacScrnBuf[i];
-        *scrnBuf++ = (currentPixels & 0x80) ? 0x0000 : 0xFFFF;
-        *scrnBuf++ = (currentPixels & 0x40) ? 0x0000 : 0xFFFF;
-        *scrnBuf++ = (currentPixels & 0x20) ? 0x0000 : 0xFFFF;
-        *scrnBuf++ = (currentPixels & 0x10) ? 0x0000 : 0xFFFF;
-        *scrnBuf++ = (currentPixels & 0x08) ? 0x0000 : 0xFFFF;
-        *scrnBuf++ = (currentPixels & 0x04) ? 0x0000 : 0xFFFF;
-        *scrnBuf++ = (currentPixels & 0x02) ? 0x0000 : 0xFFFF;
-        *scrnBuf++ = (currentPixels & 0x01) ? 0x0000 : 0xFFFF;
+        memcpy(scrnBuf, &pixelConversionTable[8*currentPixels], 16);
+        scrnBuf += 8;
     }
     
     objc_msgSend(_gScreenView, @selector(setNeedsDisplay));

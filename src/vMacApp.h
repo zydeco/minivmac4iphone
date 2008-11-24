@@ -19,7 +19,7 @@
 #define MOUSE_LOC_THRESHOLD     100     // pixel distance in mac screen, squared, integer
 #define kScreenEdgeSize         20      // edge size for scrolling
 #define kScreenRectFullScreen   CGRectMake(0.f, 0.f, 480.f, 320.f)
-#define kScreenRectRealSize     CGRectMake(0.f, 0.f, 512.f, 342.f)
+#define kScreenRectRealSize     CGRectMake(0.f, 0.f, vMacScreenWidth, vMacScreenHeight)
 
 #ifndef ABS
 #define ABS(x) ((x>0)?(x):(-1*(x)))
@@ -82,11 +82,25 @@ typedef enum Direction {
 - (void)resumeEmulation;
 @end
 
+#ifndef RomFileName
+#if CurEmu <= kEmu512K
+#define RomFileName "Mac128K.ROM"
+#elif CurEmu <= kEmuPlus
 #define RomFileName "vMac.ROM"
+#elif CurEmu <= kEmuSE
+#define RomFileName "MacSE.ROM"
+#elif CurEmu <= kEmuClassic
+#define RomFileName "Classic.ROM"
+#else
+#error "RomFileName not defined"
+#endif
+#endif
 
 extern vMacApp* _vmacAppSharedInstance;
 extern NSInteger numInsertedDisks;
 extern blnr SpeedStopped;
 extern short* SurfaceScrnBuf;
+extern short* pixelConversionTable;
 extern id _gScreenView;
+
 void runTick (CFRunLoopTimerRef timer, void* info);

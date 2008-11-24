@@ -299,6 +299,12 @@ IMPORTFUNC blnr InitEmulation(void);
     }
     memset(screencomparebuff, 0xFF, vMacScreenNumBytes);
     
+    // pixel conversion table
+    pixelConversionTable = malloc(sizeof(short)*8*256);
+    for(int i=0; i < 256; i++) {
+        for(int j=0; j < 8; j++) pixelConversionTable[8*i+j] = ((i & (0x80 >> j)) ? 0x0000 : 0xFFFF);
+    }
+    
     // init location
     NSTimeZone *ntz = [NSTimeZone localTimeZone];
     // I'm not really going to use the location services
