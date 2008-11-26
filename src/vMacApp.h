@@ -9,6 +9,7 @@
 #import "DATE2SEC.h"
 #import "CNFGGLOB.h"
 
+#define kMacEpoch 2082844800
 #define MyTickDuration (1/60.14742)
 
 #define PointDistanceSq(a, b) ((((int)a.h-(int)b.h)*((int)a.h-(int)b.h)) + (((int)a.v-(int)b.v)*((int)a.v-(int)b.v)))
@@ -102,5 +103,6 @@ extern blnr SpeedStopped;
 extern short* SurfaceScrnBuf;
 extern short* pixelConversionTable;
 extern id _gScreenView;
+extern ui5b MacDateDiff;
 
 void runTick (CFRunLoopTimerRef timer, void* info);

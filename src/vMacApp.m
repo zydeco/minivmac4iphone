@@ -311,13 +311,8 @@ IMPORTFUNC blnr InitEmulation(void);
     CurMacLatitude = 0;
     CurMacLongitude = 0;
     CurMacDelta = [ntz secondsFromGMT]/3600;
-    CFTimeZoneRef tz = CFTimeZoneCopySystem();
-    aTimeBase = CFAbsoluteTimeGetCurrent();
-    CFGregorianDate d = CFAbsoluteTimeGetGregorianDate(aTimeBase, tz);
-    double floorsec = floor(d.second);
-    aTimeBase -= (d.second - floorsec);
-    timeSecBase = Date2MacSeconds(floorsec, d.minute, d.hour, d.day, d.month, d.year);
-    CFRelease(tz);
+    MacDateDiff = kMacEpoch + [ntz secondsFromGMT];
+    CurMacDateInSeconds = time(NULL) + MacDateDiff;
     
     // init drives
     if (![self initDrives]) {

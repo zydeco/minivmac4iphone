@@ -27,6 +27,7 @@ NSInteger numInsertedDisks;
 short* SurfaceScrnBuf;
 short* pixelConversionTable;
 id _gScreenView;
+ui5b MacDateDiff;
 IMPORTFUNC blnr ScreenFindChanges(si3b TimeAdjust,
     si4b *top, si4b *left, si4b *bottom, si4b *right);
 
@@ -101,6 +102,7 @@ void runTick (CFRunLoopTimerRef timer, void* info)
 {
     if (SpeedStopped) return;
     static int i = 0;
+    CurMacDateInSeconds = time(NULL) + MacDateDiff;
     DoEmulateOneTick();
 #if MyFrameSkip
     if (++i%MyFrameSkip == 0) updateScreen(nil, nil);
