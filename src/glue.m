@@ -81,11 +81,11 @@ void updateScreen (CFRunLoopTimerRef timer, void* info)
     
     // convert the pixels
     unsigned char *vmacScrnBuf = screencomparebuff;
-    short *scrnBuf = SurfaceScrnBuf;
-    register int currentPixels;
-    for(register int i=0; i < vMacScreenNumBytes; i++) {
-        currentPixels = vmacScrnBuf[i];
-        memcpy(scrnBuf, &pixelConversionTable[8*currentPixels], 16);
+    int startByte = ((vMacScreenWidth * top) + left) / 8;
+    int endByte = ((vMacScreenWidth * bottom) + right) / 8;
+    register short *scrnBuf = SurfaceScrnBuf + (8 * startByte);
+    for(register int i = startByte; i < endByte; i++) {
+        memcpy(scrnBuf, &pixelConversionTable[8 * vmacScrnBuf[i]], 16);
         scrnBuf += 8;
     }
     
