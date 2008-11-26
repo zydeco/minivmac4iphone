@@ -103,10 +103,9 @@
     layout = nil;
     
     for(int i=0; i<2; i++) {
-        // remove all keys from superview
-        for(KBKey *k in keyMap[i]) {
-            [k removeFromSuperview];
-        }
+        [keyboard[i] removeFromSuperview];
+        // remove all key from superview
+        for(KBKey *k in keyMap[i]) [k removeFromSuperview];
         // release key array
         [keyMap[i] release];
         keyMap[i] = nil;
