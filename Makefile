@@ -1,6 +1,6 @@
 PROD = minivmac
 APP  = minivmac.app
-VERSION=1.0.1
+VERSION=1.0.2
 
 MNVM = ADDRSPAC.o \
        GLOBGLUE.o \
@@ -45,7 +45,9 @@ LDFLAGS = -framework Foundation \
           -bind_at_load \
           -multiply_defined suppress
 
-CFLAGS = -Werror -std=c99 -march=armv6 -mcpu=arm1176jzf-s -Isrc/mnvm -DVERSION="$(VERSION)"
+CFLAGS = -Werror -std=c99 \
+         -march=armv6 -mcpu=arm1176jzf-s -fomit-frame-pointer \
+         -Isrc/mnvm -DVERSION="$(VERSION)"
 
 all: $(PROD) app
 	
@@ -69,6 +71,7 @@ app: $(PROD)
 	cp -r Resources/* build/$(APP)/
 	cp $(PROD) build/$(APP)/
 	sed s/BUNDLE_VERSION/$(VERSION)/ Resources/Info.plist > build/$(APP)/Info.plist
+	plutil -convert binary1 build/$(APP)/*.kbdlayout
 
 clean:
 	rm -rf $(OBJS) $(PROD)
