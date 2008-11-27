@@ -46,7 +46,7 @@ LDFLAGS = -framework Foundation \
           -multiply_defined suppress
 
 CFLAGS = -Werror -std=c99 \
-         -march=armv6 -mcpu=arm1176jzf-s -fomit-frame-pointer -O3 \
+         -march=armv6 -mcpu=arm1176jzf-s -fomit-frame-pointer -O2 \
          -Isrc/mnvm -DVERSION="$(VERSION)"
 
 all: $(PROD) app
