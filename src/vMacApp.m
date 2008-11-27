@@ -61,8 +61,17 @@ IMPORTFUNC blnr InitEmulation(void);
     [self resumeEmulation];
 }
 
+- (NSArray*)searchPaths {
+    return searchPaths;
+}
+
+#if 0
+#pragma mark -
+#pragma mark Preferences
+#endif
+
 - (void)initPreferences {
-    NSUserDefaults * defaults = [NSUserDefaults standardUserDefaults];
+    defaults = [NSUserDefaults standardUserDefaults];
     if ([defaults stringForKey:@"KeyboardLayout"] == nil)
         [defaults setObject:@"US" forKey:@"KeyboardLayout"];
     if ([defaults objectForKey:@"ScreenSizeToFit"] == nil)
@@ -71,11 +80,15 @@ IMPORTFUNC blnr InitEmulation(void);
         [defaults setFloat:0.8 forKey:@"KeyboardAlpha"];
     if ([defaults objectForKey:@"ScreenPosition"] == nil)
         [defaults setInteger:dirUp|dirLeft forKey:@"ScreenPosition"];
+    if ([defaults objectForKey:@"SoundEnabled"] == nil)
+        [defaults setBool:YES forKey:@"SoundEnabled"];
     [defaults synchronize];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didChangePreferences:) name:@"preferencesUpdated" object:nil];
 }
 
-- (NSArray*)searchPaths {
-    return searchPaths;
+- (void)didChangePreferences:(NSNotification *)aNotification {
+    if ([defaults boolForKey:@"SoundEnabled"]) MySound_Start();
+    else MySound_Stop();
 }
 
 #if 0
@@ -348,7 +361,7 @@ IMPORTFUNC blnr InitEmulation(void);
     CFRunLoopAddTimer(CFRunLoopGetMain(), tickTimer, kCFRunLoopCommonModes);
     
     #if MySoundEnabled
-        MySound_Start();
+        if ([defaults boolForKey:@"SoundEnabled"]) MySound_Start();
     #endif
     
     // set speed

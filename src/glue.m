@@ -205,13 +205,13 @@ bool MySound_Init(void) {
 }
 
 GLOBALPROC MySound_Start (void) {
-    if (!aq.mIsInitialized) return;
+    if (!aq.mIsInitialized || aq.mIsRunning) return;
     AudioQueueStart(aq.mQueue, NULL);
     aq.mIsRunning = true;
 }
 
 GLOBALPROC MySound_Stop (void) {
-    if (!aq.mIsRunning) return;
+    if (!aq.mIsRunning || !aq.mIsInitialized) return;
     AudioQueueStop(aq.mQueue, false);
     aq.mIsRunning = false;
 }

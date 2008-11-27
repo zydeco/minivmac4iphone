@@ -8,6 +8,7 @@
 
 typedef enum {
     settingsGroupKeyboard,
+    settingsGroupSound,
     settingsGroupVersion,
     
     settingsGroupCount

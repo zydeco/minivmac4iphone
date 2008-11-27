@@ -2,6 +2,7 @@
 #import "vMacApp.h"
 #import <UIKit/UIPreferencesControlTableCell.h>
 #import <UIKit/UISliderControl.h>
+#import <UIKit/UISwitchControl.h>
 
 extern NSString *kUIButtonBarButtonAction;
 extern NSString *kUIButtonBarButtonInfo;
@@ -129,6 +130,8 @@ extern NSString *kUIButtonBarButtonType;
 - (int)preferencesTable:(UIPreferencesTable*)aTable numberOfRowsInGroup:(int)group {
     if (group == settingsGroupKeyboard)
         return [layouts count] + 1;
+    else if (group == settingsGroupSound)
+        return 1;
     else if (group == settingsGroupVersion)
         return 1;
 }
@@ -138,6 +141,8 @@ extern NSString *kUIButtonBarButtonType;
     
     if (group == settingsGroupKeyboard)
         [cell setTitle:@"Keyboard"];
+    else if (group == settingsGroupSound)
+        [cell setTitle:@"Sound"];
     else
         cell = nil;
     
@@ -159,7 +164,7 @@ extern NSString *kUIButtonBarButtonType;
             [cell setTitle:@"Opacity"];
             [cell setShowSelection:NO];
             UISliderControl * sc = [[UISliderControl alloc] initWithFrame: CGRectMake(86.0f, 4.0f, 140.0f, 40.0f)];
-            [sc addTarget:self action:@selector(keyboardAlphaChanged:) forEvents:7|64];
+            [sc addTarget:self action:@selector(keyboardAlphaChanged:) forEvents:4096];
             [sc setAllowsTickMarkValuesOnly:NO];
             [sc setMinValue:0.2];
             [sc setMaxValue:1.0];
@@ -168,6 +173,15 @@ extern NSString *kUIButtonBarButtonType;
             [sc setContinuous:YES];
             [cell setControl:[sc autorelease]];
         }
+    } else if (group == settingsGroupSound) {
+        cell = [[UIPreferencesControlTableCell alloc] init];
+        [cell setTitle:@"Enable"];
+        [cell setShowSelection: NO];
+        UISwitchControl * sc = [[UISwitchControl alloc] init];
+        [sc addTarget:self action:@selector(soundEnabledChanged:) forEvents:4096];
+        [sc setOrigin:CGPointMake(127, 10)];
+        [sc setValue: [defaults boolForKey:@"SoundEnabled"]?1.0f:0.0f];
+        [cell setControl:[sc autorelease]];
     } else if (group == settingsGroupVersion) {
         cell = [[UIPreferencesTableCell alloc] init];
         NSString* bundleVersion = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"];
@@ -207,6 +221,13 @@ extern NSString *kUIButtonBarButtonType;
 
 - (void)keyboardAlphaChanged:(UISliderControl*)slider {
     [defaults setFloat:[slider value] forKey:@"KeyboardAlpha"];
+    [defaults synchronize];
+    [self notifyPrefsUpdate];
+}
+
+- (void)soundEnabledChanged:(UIPreferencesControlTableCell*)cell {
+    UISwitchControl* control = [cell control];
+    [defaults setBool:([control value] == 1.0) forKey:@"SoundEnabled"];
     [defaults synchronize];
     [self notifyPrefsUpdate];
 }

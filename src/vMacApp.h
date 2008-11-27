@@ -58,6 +58,7 @@ typedef enum Direction {
     MainView*   mainView;
     BOOL        initOk;
     
+    NSUserDefaults* defaults;
     NSMutableSet*   openAlerts;
     NSFileHandle*   drives[NumDrives];
     NSString*       drivePath[NumDrives];
@@ -71,8 +72,9 @@ typedef enum Direction {
 
 + (id)sharedInstance;
 
-- (void)initPreferences;
 - (NSArray*)searchPaths;
+- (void)initPreferences;
+- (void)didChangePreferences:(NSNotification *)aNotification;
 - (void)warnMessage:(NSString *)message;
 - (BOOL)initDrives;
 - (BOOL)loadROM;
