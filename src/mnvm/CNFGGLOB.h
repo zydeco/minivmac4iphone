@@ -7,7 +7,7 @@
 #define cIncludeUnused 0
 
 #define MyFrameSkip 0
-#define MySoundEnabled 0
+#define MySoundEnabled 1
 #define CurEmu kEmuPlus
 #define NumDrives 8
 #define WantInitSpeedValue 0

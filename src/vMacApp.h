@@ -105,4 +105,7 @@ extern short* pixelConversionTable;
 extern id _gScreenView;
 extern ui5b MacDateDiff;
 
+bool MySound_Init (void);
+GLOBALPROC MySound_Start (void);
+GLOBALPROC MySound_Stop (void);
 void runTick (CFRunLoopTimerRef timer, void* info);

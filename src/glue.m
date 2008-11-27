@@ -19,6 +19,7 @@
 */
 
 #import <UIKit/UIKit.h>
+#import <AudioToolbox/AudioToolbox.h>
 #import "vMacApp.h"
 #import "DATE2SEC.h"
 
@@ -147,66 +148,77 @@ GLOBALFUNC si4b vSonyEject(ui4b Drive_No) {
 #define kLn2SoundBuffers 4 /* kSoundBuffers must be a power of two */
 #define kSoundBuffers (1 << kLn2SoundBuffers)
 #define kSoundBuffMask (kSoundBuffers - 1)
-#define DesiredMinFilledSoundBuffs 3
-/*
- if too big then sound lags behind emulation.
- if too small then sound will have pauses.
- */
-
 #define kLn2BuffLen 9
 #define kLnBuffSz (kLn2SoundBuffers + kLn2BuffLen)
 #define My_Sound_Len (1UL << kLn2BuffLen)
 #define kBufferSize (1UL << kLnBuffSz)
 #define kBufferMask (kBufferSize - 1)
 #define dbhBufferSize (kBufferSize + SOUND_LEN)
-#define FillWithSilence(p,n,v) for (int fws_i = n; --i >= 0;) *p++ = v
-static const int kNumberBuffers = 3;
-struct AQPlayerState {
-    AudioStreamBasicDescription   mDataFormat;
-    AudioQueueRef                 mQueue;
-    AudioQueueBufferRef           mBuffers[kSoundBuffers];
-    AudioFileID                   mAudioFile;
-    UInt32                        bufferByteSize;
-    SInt64                        mCurrentPacket;
-    UInt32                        mNumPacketsToRead;
-    AudioStreamPacketDescription  *mPacketDescs;
-    bool                          mIsRunning;
-} aq;
-void MySoundCallback(void *userData, AudioQueueRef queue, AudioQueueBufferRef buffer);
 
-void MySound_Start(void)
-{
-    NSLog(@"SoundStart");
-    AudioQueueStart(aq.mQueue, NULL);
-    aq.mIsRunning = true;
+static int curFillBuffer = 0;
+static int curPlayBuffer = 0;
+
+#define FillWithSilence(p,n,v) for (int fws_i = n; --fws_i >= 0;) *p++ = v
+
+struct {
+    bool                          mIsInitialized;
+    bool                          mIsRunning;
+    AudioQueueRef                 mQueue;
+    AudioStreamBasicDescription   mDataFormat;
+    AudioQueueBufferRef           mBuffers[kSoundBuffers];
+} aq;
+
+void MySound_Callback (void *data, AudioQueueRef mQueue, AudioQueueBufferRef mBuffer) {
+    mBuffer->mAudioDataByteSize = SOUND_LEN;
+    AudioQueueEnqueueBuffer(mQueue, mBuffer, 0, NULL);
 }
 
-GLOBALFUNC void SoundInit(void)
-{
+bool MySound_Init(void) {
     OSStatus err;
-    NSLog(@"SoundInit");
+    bzero(&aq, sizeof aq);
+    
+    // create queue
     aq.mDataFormat.mSampleRate = SOUND_SAMPLERATE;
-    aq.mDataFormat.mFormatID = 'lpcm';
-    aq.mDataFormat.mFormatFlags = kAudioFormatFlagIsSignedInteger | kAudioFormatFlagIsBigEndian | kAudioFormatFlagIsPacked;
+    aq.mDataFormat.mFormatID = kAudioFormatLinearPCM;
+    aq.mDataFormat.mFormatFlags = kAudioFormatFlagIsPacked;
     aq.mDataFormat.mBytesPerPacket = 1;
     aq.mDataFormat.mFramesPerPacket = 1;
     aq.mDataFormat.mBytesPerFrame = 1;
     aq.mDataFormat.mChannelsPerFrame = 1;
     aq.mDataFormat.mBitsPerChannel = 8;
     aq.mDataFormat.mReserved = 0;
-    
-    err = AudioQueueNewOutput(&(aq.mDataFormat), MySoundCallback, NULL, CFRunLoopGetMain(), kCFRunLoopCommonModes, 0, &(aq.mQueue));
+    err = AudioQueueNewOutput(&aq.mDataFormat, MySound_Callback, NULL, CFRunLoopGetMain(), kCFRunLoopCommonModes, 0, &aq.mQueue);
     if (err != noErr) NSLog(@"Error %d creating audio queue", err);
+    
+    // create buffers
+    for (int i=0; i<kSoundBuffers; i++) {
+        AudioQueueAllocateBuffer(aq.mQueue, SOUND_LEN, &aq.mBuffers[i]);
+        MySound_Callback(NULL, aq.mQueue, aq.mBuffers[i]);
+    }
+    
+    aq.mIsInitialized = true;
+    return trueblnr;
 }
 
-void MySoundCallback(void *userData, AudioQueueRef queue, AudioQueueBufferRef buffer)
-{
-    NSLog(@"SoundCB");
+GLOBALPROC MySound_Start (void) {
+    NSLog(@"SOUND start");
+    if (!aq.mIsInitialized) return;
+    AudioQueueStart(aq.mQueue, NULL);
+    aq.mIsRunning = true;
 }
 
-GLOBALFUNC ui3p GetCurSoundOutBuff(void)
-{
-    return nullpr;
+GLOBALPROC MySound_Stop (void) {
+    NSLog(@"SOUND stop");
+    if (!aq.mIsRunning) return;
+    AudioQueueStop(aq.mQueue, false);
+    aq.mIsRunning = false;
+}
+
+GLOBALFUNC ui3p GetCurSoundOutBuff(void) {
+    if (!aq.mIsRunning) return nullpr;
+    curFillBuffer ++;
+    curFillBuffer &= kSoundBuffMask;
+    return aq.mBuffers[curFillBuffer]->mAudioData;
 }
 #else
 

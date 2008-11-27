@@ -307,9 +307,6 @@ IMPORTFUNC blnr InitEmulation(void);
     
     // init location
     NSTimeZone *ntz = [NSTimeZone localTimeZone];
-    // I'm not really going to use the location services
-    CurMacLatitude = 0;
-    CurMacLongitude = 0;
     CurMacDelta = [ntz secondsFromGMT]/3600;
     MacDateDiff = kMacEpoch + [ntz secondsFromGMT];
     CurMacDateInSeconds = time(NULL) + MacDateDiff;
@@ -319,6 +316,11 @@ IMPORTFUNC blnr InitEmulation(void);
         [self warnMessage:@"Could not initialize drives"];
         return NO;
     }
+    
+    // init sound
+    #if MySoundEnabled
+    if (!MySound_Init()) [self warnMessage:@"Could not initialize sound"];
+    #endif
     
     // init emulation
     if (!InitEmulation()) {
@@ -336,10 +338,6 @@ IMPORTFUNC blnr InitEmulation(void);
         if ([mng fileExistsAtPath:path]) [self insertDisk:path];
     }
     
-    #if MySoundEnabled
-        MySound_Start();
-    #endif
-    
     [self resumeEmulation];
 }
 
@@ -349,11 +347,19 @@ IMPORTFUNC blnr InitEmulation(void);
     tickTimer = CFRunLoopTimerCreate(kCFAllocatorDefault, 0, MyTickDuration, 0, 0, runTick, &tCtx);
     CFRunLoopAddTimer(CFRunLoopGetMain(), tickTimer, kCFRunLoopCommonModes);
     
+    #if MySoundEnabled
+        MySound_Start();
+    #endif
+    
     // set speed
     SpeedStopped = falseblnr;
 }
 
 - (void)suspendEmulation {
+    #if MySoundEnabled
+        MySound_Stop();
+    #endif
+    
     SpeedStopped = trueblnr;
     CFRunLoopRemoveTimer(CFRunLoopGetMain(), tickTimer, kCFRunLoopCommonModes);
 }
