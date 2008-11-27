@@ -1,0 +1,27 @@
+/* error warnings */
+"WarnTitle" = "Warning";
+"WarnUnsupportedROM" = "Unsupported ROM";
+"WarnAbnormalSituation" = "Abnormal Situation";
+"WarnAbnormalSituationDetailed" = "Abnormal Situation: %s";
+"WarnCorruptedROM" = "Corrupted ROM";
+"WarnNoROM" = "Could not load ROM file (%s)";
+"WarnNoRAM" = "Could not allocate RAM";
+"WarnNoScreen" = "Could not allocate screen buffer";
+"WarnNoDrives" = "Could not initalize drives";
+"WarnNoSound" = "Could not initialize sound";
+"WarnNoEmu" = "Could not initalize emulation";
+
+/* insert disk view */
+"InsertDisk" = "Insert Disk";
+
+/* settings view */
+"Settings" = "Settings";
+"SettingsKeyboard" = "Keyboard";
+"SettingsKeyboardOpacity" = "Opacity";
+"SettingsSound" = "Sound";
+"SettingsSoundEnable" = "Enable";
+
+/* global */
+"OK" = "OK";
+"Cancel" = "Cancel";
+"Close" = "Close";

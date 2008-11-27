@@ -1,0 +1,27 @@
+/* error warnings */
+"WarnTitle" = "Error";
+"WarnUnsupportedROM" = "ROM no soportada";
+"WarnAbnormalSituation" = "Operación no soportada";
+"WarnAbnormalSituationDetailed" = "Operación no soportada: %s";
+"WarnCorruptedROM" = "ROM inválida";
+"WarnNoROM" = "No se pudo cargar la ROM (%s)";
+"WarnNoRAM" = "No se pudo iniciar la RAM";
+"WarnNoScreen" = "No se pudo iniciar la pantalla";
+"WarnNoDrives" = "No se pudieron iniciar las unidades";
+"WarnNoSound" = "No se pudo iniciar el sonido";
+"WarnNoEmu" = "No se pudo iniciar la emulación";
+
+/* insert disk view */
+"InsertDisk" = "Insertar Disco";
+
+/* settings view */
+"Settings" = "Ajustes";
+"SettingsKeyboard" = "Teclado";
+"SettingsKeyboardOpacity" = "Opacidad";
+"SettingsSound" = "Sonido";
+"SettingsSoundEnable" = "Activar";
+
+/* global */
+"OK" = "OK";
+"Cancel" = "Cancelar";
+"Close" = "Cerrar";

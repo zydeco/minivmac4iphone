@@ -10,6 +10,7 @@
 #define MySoundEnabled 1
 #define CurEmu kEmuPlus
 #define NumDrives 8
+#define DetailedAbormalReport 1
 #define WantInitSpeedValue 0
 #define IncludePbufs 0
 #define IncludeSonyRawMode 0

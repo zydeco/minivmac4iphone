@@ -38,24 +38,24 @@ IMPORTFUNC blnr ScreenFindChanges(si3b TimeAdjust,
 #endif
 
 GLOBALPROC WarnMsgUnsupportedROM(void) {
-    [_vmacAppSharedInstance warnMessage:@"Unsupported ROM"];
+    [_vmacAppSharedInstance warnMessage:NSLocalizedString(@"WarnUnsupportedROM", nil)];
 }
 
 #if DetailedAbormalReport
 GLOBALPROC WarnMsgAbnormal(char *s)
 {
-    [_vmacAppSharedInstance warnMessage:[NSString stringWithFormat:@"Abnormal Situation: %s", s]];
+    [_vmacAppSharedInstance warnMessage:[NSString stringWithFormat:NSLocalizedString(@"WarnAbnormalSituationDetailed", nil), s]];
 }
 #else
 GLOBALPROC WarnMsgAbnormal(void)
 {
-    [_vmacAppSharedInstance warnMessage:@"Abnormal Situation"];
+    [_vmacAppSharedInstance warnMessage:NSLocalizedString(@"WarnAbnormalSituation", nil)];
 }
 #endif
 
 GLOBALPROC WarnMsgCorruptedROM(void)
 {
-    [_vmacAppSharedInstance warnMessage:@"Corrupted ROM"];
+    [_vmacAppSharedInstance warnMessage:NSLocalizedString(@"WarnCorruptedROM", nil)];
 }
 
 #if 0

@@ -27,9 +27,9 @@ extern NSString *kUIButtonBarButtonType;
         // create nav bar
         navBar = [[UINavigationBar alloc] initWithFrame: CGRectMake(0.0, 0.0, frame.size.width, 48.0)];
         [navBar setDelegate:self];
-        UINavigationItem *navItem = [[UINavigationItem alloc] initWithTitle:@"Settings"];
+        UINavigationItem *navItem = [[UINavigationItem alloc] initWithTitle:NSLocalizedString(@"Settings", nil)];
         [navBar pushNavigationItem: navItem];
-        [navBar showButtonsWithLeftTitle: @"Close" rightTitle: nil  leftBack: YES];
+        [navBar showButtonsWithLeftTitle: NSLocalizedString(@"Close", nil) rightTitle: nil  leftBack: YES];
         [self addSubview: navBar];
         [navItem autorelease];
         
@@ -140,9 +140,9 @@ extern NSString *kUIButtonBarButtonType;
     UIPreferencesTableCell * cell = [[[UIPreferencesTableCell alloc] init] autorelease];
     
     if (group == settingsGroupKeyboard)
-        [cell setTitle:@"Keyboard"];
+        [cell setTitle:NSLocalizedString(@"SettingsKeyboard", nil)];
     else if (group == settingsGroupSound)
-        [cell setTitle:@"Sound"];
+        [cell setTitle:NSLocalizedString(@"SettingsSound", nil)];
     else
         cell = nil;
     
@@ -161,21 +161,21 @@ extern NSString *kUIButtonBarButtonType;
         } else {
             // keyboard alpha
             cell = [[UIPreferencesControlTableCell alloc] init];
-            [cell setTitle:@"Opacity"];
+            [cell setTitle:NSLocalizedString(@"SettingsKeyboardOpacity", nil)];
             [cell setShowSelection:NO];
-            UISliderControl * sc = [[UISliderControl alloc] initWithFrame: CGRectMake(86.0f, 4.0f, 140.0f, 40.0f)];
+            UISliderControl * sc = [[UISliderControl alloc] initWithFrame: CGRectMake(96.0f, 4.0f, 130.0f, 40.0f)];
             [sc addTarget:self action:@selector(keyboardAlphaChanged:) forEvents:4096];
             [sc setAllowsTickMarkValuesOnly:NO];
             [sc setMinValue:0.2];
             [sc setMaxValue:1.0];
             [sc setValue: [defaults floatForKey:@"KeyboardAlpha"]];
-            [sc setShowValue:YES];
+            [sc setShowValue:NO];
             [sc setContinuous:YES];
             [cell setControl:[sc autorelease]];
         }
     } else if (group == settingsGroupSound) {
         cell = [[UIPreferencesControlTableCell alloc] init];
-        [cell setTitle:@"Enable"];
+        [cell setTitle:NSLocalizedString(@"SettingsSoundEnable", nil)];
         [cell setShowSelection: NO];
         UISwitchControl * sc = [[UISwitchControl alloc] init];
         [sc addTarget:self action:@selector(soundEnabledChanged:) forEvents:4096];
@@ -185,7 +185,8 @@ extern NSString *kUIButtonBarButtonType;
     } else if (group == settingsGroupVersion) {
         cell = [[UIPreferencesTableCell alloc] init];
         NSString* bundleVersion = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"];
-        [cell setTitle:[NSString stringWithFormat:@"Mini vMac for iPhone %@\n©2008 namedfork.net", bundleVersion]];
+        NSString* bundleLongName = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleLongName"];
+        [cell setTitle:[NSString stringWithFormat:@"%@ %@\n©2008 namedfork.net", bundleLongName, bundleVersion]];
     }
     
     return [cell autorelease];

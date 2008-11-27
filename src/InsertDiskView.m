@@ -22,9 +22,9 @@
         // create nav bar
         navBar = [[UINavigationBar alloc] initWithFrame: CGRectMake(0.0, 0.0, rect.size.width, 48.0)];
         [navBar setDelegate:self];
-        UINavigationItem *navItem = [[UINavigationItem alloc] initWithTitle:@"Insert Disk"];
+        UINavigationItem *navItem = [[UINavigationItem alloc] initWithTitle:NSLocalizedString(@"InsertDisk", nil)];
         [navBar pushNavigationItem: navItem];
-        [navBar showButtonsWithLeftTitle:nil rightTitle: @"Cancel" leftBack: NO];
+        [navBar showButtonsWithLeftTitle:nil rightTitle: NSLocalizedString(@"Cancel", nil) leftBack: NO];
         [self addSubview: navBar];
         [navItem autorelease];
     }

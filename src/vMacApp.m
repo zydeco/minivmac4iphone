@@ -153,8 +153,14 @@ IMPORTFUNC blnr InitEmulation(void);
         for(NSString* file in files) {
             NSString* layoutID = [file stringByDeletingPathExtension];
             NSDictionary* kbFile = [NSDictionary dictionaryWithContentsOfFile:[dir stringByAppendingPathComponent:file]];
-            NSString* layoutName = [kbFile objectForKey:@"Name"];
-            [layouts setObject:layoutName forKey:layoutID];
+            id layoutName = [kbFile objectForKey:@"Name"];
+            if ([layoutName isKindOfClass:[NSDictionary class]]) {
+                NSString* localization = [[[NSBundle mainBundle] preferredLocalizations] objectAtIndex:0];
+                NSString* localizedLayoutName = [layoutName objectForKey:localization];
+                if (localizedLayoutName == nil) localizedLayoutName = [layoutName objectForKey:@"English"];
+                [layouts setObject:localizedLayoutName forKey:layoutID];
+            } else
+                [layouts setObject:layoutName forKey:layoutID];
         }
     }
     
@@ -250,7 +256,7 @@ IMPORTFUNC blnr InitEmulation(void);
 #endif
 
 - (void)warnMessage:(NSString *)message {
-    UIAlertView* alert = [[UIAlertView alloc] initWithTitle:@"Warning" message:message delegate:self cancelButtonTitle:@"OK" otherButtonTitles:nil];
+    UIAlertView* alert = [[UIAlertView alloc] initWithTitle:NSLocalizedString(@"WarnTitle", nil) message:message delegate:self cancelButtonTitle:NSLocalizedString(@"OK", nil) otherButtonTitles:nil];
     [openAlerts addObject:alert];
     SpeedStopped = trueblnr;
     [alert show];
@@ -281,7 +287,7 @@ IMPORTFUNC blnr InitEmulation(void);
     // read ROM from first found file
     romData = [NSData dataWithContentsOfFile:romPath];
     if (romData == nil) {
-        [self warnMessage:@"Could not load ROM file"];
+        [self warnMessage:[NSString stringWithFormat:NSLocalizedString(@"WarnNoROM", nil), RomFileName]];
         return NO;
     }
     ROM = (ui4b*)[romData bytes];
@@ -300,14 +306,14 @@ IMPORTFUNC blnr InitEmulation(void);
     // allocate RAM
     RAM = (ui4b*)calloc(1, kRAM_Size + RAMSafetyMarginFudge);
     if (RAM == NULL) {
-        [self warnMessage:@"Could not allocate RAM"];
+        [self warnMessage:NSLocalizedString(@"WarnNoRAM", nil)];
         return NO;
     }
     
     // allocate screen
     screencomparebuff = malloc(vMacScreenNumBytes);
     if (screencomparebuff == NULL) {
-        [self warnMessage:@"Could not allocate screen buffer"];
+        [self warnMessage:NSLocalizedString(@"WarnNoScreen", nil)];
         return NO;
     }
     memset(screencomparebuff, 0xFF, vMacScreenNumBytes);
@@ -326,18 +332,18 @@ IMPORTFUNC blnr InitEmulation(void);
     
     // init drives
     if (![self initDrives]) {
-        [self warnMessage:@"Could not initialize drives"];
+        [self warnMessage:NSLocalizedString(@"WarnNoDrives", nil)];
         return NO;
     }
     
     // init sound
     #if MySoundEnabled
-    if (!MySound_Init()) [self warnMessage:@"Could not initialize sound"];
+    if (!MySound_Init()) [self warnMessage:NSLocalizedString(@"WarnNoSound", nil)];
     #endif
     
     // init emulation
     if (!InitEmulation()) {
-        [self warnMessage:@"Could not initialize emulation"];
+        [self warnMessage:NSLocalizedString(@"WarnNoEmu", nil)];
         return NO;
     }
     return YES;

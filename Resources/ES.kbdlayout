@@ -2,8 +2,13 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <key>Name</key>
-    <string>Spanish</string>
+	<key>Name</key>
+	<dict>
+		<key>English</key>
+		<string>Spanish</string>
+		<key>Spanish</key>
+		<string>Español</string>
+	</dict>
 	<key>Map1</key>
 	<array>
 		<dict> <!-- space -->

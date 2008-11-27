@@ -77,7 +77,7 @@ clean:
 	rm -rf $(OBJS) $(PROD)
 	rm -rf ./build
 
-install:
+install: app
 	scp -r build/$(APP) root@$(IPHONE):/Applications
 	ssh $(IPHONE) respring
 

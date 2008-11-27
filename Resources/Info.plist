@@ -6,6 +6,8 @@
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
 	<string>Mini vMac</string>
+	<key>CFBundleLongName</key>
+	<string>Mini vMac for iPhone</string>
 	<key>CFBundleExecutable</key>
 	<string>minivmac</string>
 	<key>CFBundleIconFile</key>
