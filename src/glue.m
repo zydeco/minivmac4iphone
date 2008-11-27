@@ -156,7 +156,7 @@ GLOBALFUNC si4b vSonyEject(ui4b Drive_No) {
 #define dbhBufferSize (kBufferSize + SOUND_LEN)
 
 static int curFillBuffer = 0;
-static int curPlayBuffer = 0;
+static int numFullBuffers = 0;
 
 #define FillWithSilence(p,n,v) for (int fws_i = n; --fws_i >= 0;) *p++ = v
 
@@ -170,6 +170,10 @@ struct {
 
 void MySound_Callback (void *data, AudioQueueRef mQueue, AudioQueueBufferRef mBuffer) {
     mBuffer->mAudioDataByteSize = SOUND_LEN;
+    if (numFullBuffers == 0) {
+        char *audioData = mBuffer->mAudioData;
+        FillWithSilence(audioData, SOUND_LEN, 0x80);
+    } else numFullBuffers--;
     AudioQueueEnqueueBuffer(mQueue, mBuffer, 0, NULL);
 }
 
@@ -201,14 +205,12 @@ bool MySound_Init(void) {
 }
 
 GLOBALPROC MySound_Start (void) {
-    NSLog(@"SOUND start");
     if (!aq.mIsInitialized) return;
     AudioQueueStart(aq.mQueue, NULL);
     aq.mIsRunning = true;
 }
 
 GLOBALPROC MySound_Stop (void) {
-    NSLog(@"SOUND stop");
     if (!aq.mIsRunning) return;
     AudioQueueStop(aq.mQueue, false);
     aq.mIsRunning = false;
@@ -216,8 +218,10 @@ GLOBALPROC MySound_Stop (void) {
 
 GLOBALFUNC ui3p GetCurSoundOutBuff(void) {
     if (!aq.mIsRunning) return nullpr;
+    if (numFullBuffers == kSoundBuffers) return nullpr;
     curFillBuffer ++;
     curFillBuffer &= kSoundBuffMask;
+    numFullBuffers ++;
     return aq.mBuffers[curFillBuffer]->mAudioData;
 }
 #else
