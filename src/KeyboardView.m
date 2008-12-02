@@ -198,15 +198,15 @@
         [k setMyTitle:state];
 }
 
-- (void)mouseDown:(GSEvent *)event {
+- (void)mouseDown:(GSEventRef)event {
     
 }
 
-- (void)mouseUp:(GSEvent *)event {
+- (void)mouseUp:(GSEventRef)event {
 
 }
 
-- (void)mouseDragged:(GSEvent *)event {
+- (void)mouseDragged:(GSEventRef)event {
 
 }
 #if 0

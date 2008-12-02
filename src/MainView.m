@@ -50,7 +50,7 @@
 #pragma mark Mouse
 #endif
 
-- (void)mouseDown:(GSEvent *)event {
+- (void)mouseDown:(GSEventRef)event {
     if (!screenSizeToFit) {
         // check to scroll screen
         CGPoint tapLoc = GSEventGetLocationInWindow(event).origin;
@@ -88,7 +88,7 @@
     [super mouseDown:event];
 }
 
-- (void)mouseUp:(GSEvent *)event {
+- (void)mouseUp:(GSEventRef)event {
     Point loc = [self mouseLocForEvent:event];
     
     #if defined(MOUSE_DBLCLICK_HELPER) && MOUSE_DBLCLICK_HELPER
@@ -104,7 +104,7 @@
     [super mouseUp:event];
 }
 
-- (void)mouseDragged:(GSEvent *)event {
+- (void)mouseDragged:(GSEventRef)event {
     // mouse button must be pressed
     [[_vmacAppSharedInstance class] cancelPreviousPerformRequestsWithTarget:_vmacAppSharedInstance selector:@selector(setMouseButtonDown) object:nil];
     [_vmacAppSharedInstance setMouseButton:YES];
@@ -117,7 +117,7 @@
     [super mouseDragged:event];
 }
 
-- (Point)mouseLocForEvent:(GSEvent *)event {
+- (Point)mouseLocForEvent:(GSEventRef)event {
     CGRect r = GSEventGetLocationInWindow(event);
     Point pt;
     if (screenSizeToFit) {
@@ -184,7 +184,7 @@
     return YES;
 }
 
-- (void)gestureStarted:(GSEvent *)event {
+- (void)gestureStarted:(GSEventRef)event {
     // cancel mouse button
     [[_vmacAppSharedInstance class] cancelPreviousPerformRequestsWithTarget:_vmacAppSharedInstance selector:@selector(setMouseButtonDown) object:nil];
     [_vmacAppSharedInstance setMouseButton:NO];
@@ -194,7 +194,7 @@
         GSEventGetOuterMostPathPosition(event));
 }
 
-- (void)gestureEnded:(GSEvent *)event {
+- (void)gestureEnded:(GSEventRef)event {
     CGPoint gestureEnd = CGPointCenter(GSEventGetInnerMostPathPosition(event),
         GSEventGetOuterMostPathPosition(event));
     
@@ -221,7 +221,7 @@
         [settingsView show];
 }
 
-- (void)twoFingerTapGesture:(GSEvent *)event {
+- (void)twoFingerTapGesture:(GSEventRef)event {
     [self toggleScreenSize];
 }
 

@@ -27,12 +27,12 @@
     CGPoint         gestureStart;
 }
 
-- (Point)mouseLocForEvent:(GSEvent *)event;
+- (Point)mouseLocForEvent:(GSEventRef)event;
 
 - (void)toggleScreenSize;
 - (void)scrollScreenViewTo:(Direction)scroll;
 
 - (void)twoFingerSwipeGesture:(Direction)direction;
-- (void)twoFingerTapGesture:(GSEvent *)event;
+- (void)twoFingerTapGesture:(GSEventRef)event;
 
 @end

@@ -49,7 +49,7 @@ IMPORTFUNC blnr InitEmulation(void);
     [super dealloc];
 }
 
-- (void)applicationSuspend:(GSEvent *)event {
+- (void)applicationSuspend:(GSEventRef)event {
     if (self.insertedDisks == 0)
         [self terminate];
     else

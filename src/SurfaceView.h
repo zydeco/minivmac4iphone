@@ -8,9 +8,11 @@
  *  The memory can be accessed with the pixels property, and after modifying
  *  it you must call setNeedsDisplay on it for it to update.
  */
- 
+
+#import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 #import <CoreSurface/CoreSurface.h>
+#import <QuartzCore/CALayer.h>
 #import <GraphicsServices/GraphicsServices.h>
 
 typedef const char* PixelFormat;

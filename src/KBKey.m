@@ -110,12 +110,12 @@ static GSFontRef sharedKeyFont = NULL;
     [self setTitle:title[i]];
 }
 
-- (void)mouseDown:(GSEvent *)event {
+- (void)mouseDown:(GSEventRef)event {
     [keyboard keyDown:self type:type scancode:scancode];
     [super mouseDown:event];
 }
 
-- (void)mouseUp:(GSEvent *)event {
+- (void)mouseUp:(GSEventRef)event {
     [keyboard keyUp:self type:type scancode:scancode];
     [super mouseUp:event];
 }
