@@ -30,6 +30,7 @@ IMPORTFUNC blnr InitEmulation(void);
     [self initPreferences];
     
     // create window
+    [self setStatusBarOrientation:3 animated:NO]; // UIInterfaceOrientationLandscapeRight
     window = [[UIWindow alloc] initWithFrame: CGRectMake(0,0,480,320)];
     [window setTransform:CGAffineTransformMake(0, 1, -1, 0, -80, 80)];
     mainView = [[MainView alloc] initWithFrame: CGRectMake(0,0,480,320)];

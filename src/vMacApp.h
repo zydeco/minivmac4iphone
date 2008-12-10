@@ -86,6 +86,11 @@ typedef enum Direction {
 - (void)resumeEmulation;
 @end
 
+// @TODO remove this when using new headers
+@interface UIApplication (extras)
+- (void)setStatusBarOrientation:(int)fp8 animated:(BOOL)fp12;
+@end
+
 #ifndef RomFileName
 #if CurEmu <= kEmu512K
 #define RomFileName "Mac128K.ROM"
