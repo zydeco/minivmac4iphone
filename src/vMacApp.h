@@ -75,6 +75,7 @@ typedef enum Direction {
 - (NSArray*)searchPaths;
 - (void)initPreferences;
 - (void)didChangePreferences:(NSNotification *)aNotification;
+- (void)warnMessage:(NSString *)message title:(NSString *)title;
 - (void)warnMessage:(NSString *)message;
 - (BOOL)initDrives;
 - (BOOL)loadROM;

@@ -13,6 +13,8 @@
 
 /* insert disk view */
 "InsertDisk" = "Insert Disk";
+"TooManyDisksTitle" = "Too many Disk Images";
+"TooManyDisksText" = "I can not mount that many Disk Images. Try ejecting one.";
 
 /* settings view */
 "Settings" = "Settings";

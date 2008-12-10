@@ -51,7 +51,7 @@ IMPORTFUNC blnr InitEmulation(void);
 
 - (void)applicationSuspend:(GSEventRef)event {
     if (self.insertedDisks == 0)
-        [self terminate];
+        exit(0);
     else
         [self suspendEmulation];
 }
@@ -198,7 +198,10 @@ IMPORTFUNC blnr InitEmulation(void);
     short i, driveNum;
     NSFileManager*  mgr = [NSFileManager defaultManager];
     // check for free drive
-    if (!getFirstFreeDisk(&driveNum)) return NO;
+    if (!getFirstFreeDisk(&driveNum)) {
+        [self warnMessage:NSLocalizedString(@"TooManyDisksText", nil) title:NSLocalizedString(@"TooManyDisksTitle", nil)];
+        return NO;
+    }
     // check for file
     if ([mgr fileExistsAtPath:path isDirectory:&isDir] == NO) return NO;
     if (isDir) return NO;
@@ -255,11 +258,15 @@ IMPORTFUNC blnr InitEmulation(void);
 #pragma mark Alerts
 #endif
 
-- (void)warnMessage:(NSString *)message {
-    UIAlertView* alert = [[UIAlertView alloc] initWithTitle:NSLocalizedString(@"WarnTitle", nil) message:message delegate:self cancelButtonTitle:NSLocalizedString(@"OK", nil) otherButtonTitles:nil];
+- (void)warnMessage:(NSString *)message title:(NSString *)title {
+    UIAlertView* alert = [[UIAlertView alloc] initWithTitle:title message:message delegate:self cancelButtonTitle:NSLocalizedString(@"OK", nil) otherButtonTitles:nil];
     [openAlerts addObject:alert];
     SpeedStopped = trueblnr;
     [alert show];
+}
+
+- (void)warnMessage:(NSString *)message {
+    [self warnMessage:message title:NSLocalizedString(@"WarnTitle", nil)];
 }
 
 - (void)alertView:(UIAlertView *)alertView didDismissWithButtonIndex:(NSInteger)buttonIndex {

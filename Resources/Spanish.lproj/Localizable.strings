@@ -13,6 +13,8 @@
 
 /* insert disk view */
 "InsertDisk" = "Insertar Disco";
+"TooManyDisksTitle" = "Demasiadas imágenes de disco";
+"TooManyDisksText" = "No se pueden montar tantas imágenes de disco. Intente sacar alguna.";
 
 /* settings view */
 "Settings" = "Ajustes";
