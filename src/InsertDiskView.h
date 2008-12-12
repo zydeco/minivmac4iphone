@@ -20,4 +20,7 @@
 - (void)hide;
 - (void)show;
 - (void)findDiskFiles;
+- (void)didEjectDisk:(NSNotification *)aNotification;
+- (void)didInsertDisk:(NSNotification *)aNotification;
+
 @end

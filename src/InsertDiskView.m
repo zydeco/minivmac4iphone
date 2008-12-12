@@ -27,6 +27,10 @@
         [navBar showButtonsWithLeftTitle:nil rightTitle: NSLocalizedString(@"Cancel", nil) leftBack: NO];
         [self addSubview: navBar];
         [navItem autorelease];
+        
+        // notification
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didInsertDisk:) name:@"diskInserted" object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didEjectDisk:) name:@"diskEjected" object:nil];
     }
     return self;
 }
@@ -52,6 +56,14 @@
     self.frame = InsertDiskViewFrameVisible;
     [UIView endAnimations];
     [self findDiskFiles];
+    [table reloadData];
+}
+
+- (void)didEjectDisk:(NSNotification *)aNotification {
+    [table reloadData];
+}
+
+- (void)didInsertDisk:(NSNotification *)aNotification {
     [table reloadData];
 }
 
