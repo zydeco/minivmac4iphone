@@ -1,6 +1,6 @@
 PROD = minivmac
 APP  = minivmac.app
-VERSION=1.0.2
+VERSION=1.0.3
 
 MNVM = ADDRSPAC.o \
        GLOBGLUE.o \
@@ -46,8 +46,8 @@ LDFLAGS = -framework Foundation \
           -multiply_defined suppress
 
 CFLAGS = -Werror -std=c99 \
-         -march=armv6 -mcpu=arm1176jzf-s -fomit-frame-pointer -O2 \
-         -Isrc/mnvm -DVERSION="$(VERSION)"
+         -march=armv6 -mcpu=arm1176jzf-s -fomit-frame-pointer -O3 \
+         -include src/prefix.h -Isrc/mnvm -DVERSION="$(VERSION)"
 
 all: $(PROD) app
 	
@@ -80,7 +80,7 @@ clean:
 
 install: app
 	scp -r build/$(APP) root@$(IPHONE):/Applications
-	ssh $(IPHONE) respring
+	ssh $(IPHONE) -l mobile uicache
 
 dist: app
 	mkdir -p build/$(PROD)/{Applications,DEBIAN}
