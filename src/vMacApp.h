@@ -117,3 +117,4 @@ bool MySound_Init (void);
 GLOBALPROC MySound_Start (void);
 GLOBALPROC MySound_Stop (void);
 void runTick (CFRunLoopTimerRef timer, void* info);
+void StartUpTimeAdjust (void);

@@ -369,6 +369,10 @@ IMPORTFUNC blnr InitEmulation(void);
 }
 
 - (void)resumeEmulation {
+    // set speed
+    StartUpTimeAdjust();
+    SpeedStopped = falseblnr;
+    
     // create and start emulation tick timer
     CFRunLoopTimerContext tCtx = {0, NULL, NULL, NULL, NULL};
     tickTimer = CFRunLoopTimerCreate(kCFAllocatorDefault, 0, MyTickDuration, 0, 0, runTick, &tCtx);
@@ -377,9 +381,6 @@ IMPORTFUNC blnr InitEmulation(void);
     #if MySoundEnabled
         if ([defaults boolForKey:@"SoundEnabled"]) MySound_Start();
     #endif
-    
-    // set speed
-    SpeedStopped = falseblnr;
 }
 
 - (void)suspendEmulation {
