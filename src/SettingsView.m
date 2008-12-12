@@ -188,7 +188,7 @@ extern NSString *kUIButtonBarButtonType;
             [cell setTitle:NSLocalizedString(@"SettingsSoundDiskEject", nil)];
             [cell setShowSelection: NO];
             UISwitchControl * sc = [[UISwitchControl alloc] init];
-            [sc addTarget:self action:@selector(soundEnabledChanged:) forEvents:4096];
+            [sc addTarget:self action:@selector(soundDiskEjectChanged:) forEvents:4096];
             [sc setOrigin:CGPointMake(127, 10)];
             [sc setValue: [defaults boolForKey:@"DiskEjectSound"]?1.0f:0.0f];
             [cell setControl:[sc autorelease]];
@@ -244,4 +244,12 @@ extern NSString *kUIButtonBarButtonType;
     [defaults synchronize];
     [self notifyPrefsUpdate];
 }
+
+- (void)soundDiskEjectChanged:(UIPreferencesControlTableCell*)cell {
+    UISwitchControl* control = [cell control];
+    [defaults setBool:([control value] == 1.0) forKey:@"DiskEjectSound"];
+    [defaults synchronize];
+    [self notifyPrefsUpdate];
+}
+
 @end
