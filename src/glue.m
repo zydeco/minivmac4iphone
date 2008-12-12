@@ -20,6 +20,7 @@
 
 #import <UIKit/UIKit.h>
 #import <AudioToolbox/AudioToolbox.h>
+#import <sys/time.h>
 #import "vMacApp.h"
 #import "DATE2SEC.h"
 
@@ -29,8 +30,15 @@ short* SurfaceScrnBuf;
 short* pixelConversionTable;
 id _gScreenView;
 ui5b MacDateDiff;
-IMPORTFUNC blnr ScreenFindChanges(si3b TimeAdjust,
-    si4b *top, si4b *left, si4b *bottom, si4b *right);
+#define UsecPerSec 1000000
+#define MyInvTimeStep 16626 /* UsecPerSec / 60.14742 */
+LOCALVAR ui5b TrueEmulatedTime = 0;
+LOCALVAR ui5b CurEmulatedTime = 0;
+LOCALVAR ui5b OnTrueTime = 0;
+LOCALVAR ui5b LastTimeSec, NextTimeSec;
+LOCALVAR ui5b LastTimeUsec, NextTimeUsec;
+
+IMPORTFUNC blnr ScreenFindChanges(si3b TimeAdjust, si4b *top, si4b *left, si4b *bottom, si4b *right);
 
 #if 0
 #pragma mark -
@@ -60,26 +68,15 @@ GLOBALPROC WarnMsgCorruptedROM(void)
 
 #if 0
 #pragma mark -
-#pragma mark Emulation
-#endif
-
-GLOBALFUNC blnr ExtraTimeNotOver(void)
-{
-    NSLog(@"This code is never reached");
-    return falseblnr;
-}
-
-#if 0
-#pragma mark -
 #pragma mark Screen
 #endif
 
-void updateScreen (CFRunLoopTimerRef timer, void* info)
+void updateScreen (si3b TimeAdjust)
 {
     si4b top, left, bottom, right;
     
     // has the screen changed?
-    if (!ScreenFindChanges(MyFrameSkip, &top, &left, &bottom, &right)) return;
+    if (!ScreenFindChanges(TimeAdjust, &top, &left, &bottom, &right)) return;
     
     // convert the pixels
     unsigned char *vmacScrnBuf = screencomparebuff;
@@ -94,49 +91,6 @@ void updateScreen (CFRunLoopTimerRef timer, void* info)
     objc_msgSend(_gScreenView, @selector(setNeedsDisplay));
 }
 
-#if 0
-#pragma mark -
-#pragma mark Misc
-#endif
-
-void runTick (CFRunLoopTimerRef timer, void* info)
-{
-    if (SpeedStopped) return;
-    static int i = 0;
-    CurMacDateInSeconds = time(NULL) + MacDateDiff;
-    DoEmulateOneTick();
-#if MyFrameSkip
-    if (++i%MyFrameSkip == 0) updateScreen(nil, nil);
-#else
-    UnusedParam(i);
-    updateScreen(nil, nil);
-#endif
-}
-
-
-#if 0
-#pragma mark -
-#pragma mark Floppy Driver
-#endif
-
-GLOBALFUNC si4b vSonyRead(void *Buffer, ui4b Drive_No, ui5b Sony_Start, ui5b *Sony_Count)
-{
-    return [_vmacAppSharedInstance readFromDrive:Drive_No start:Sony_Start count:Sony_Count buffer:Buffer];
-}
-
-GLOBALFUNC si4b vSonyWrite(void *Buffer, ui4b Drive_No, ui5b Sony_Start, ui5b *Sony_Count)
-{
-    return [_vmacAppSharedInstance writeToDrive:Drive_No start:Sony_Start count:Sony_Count buffer:Buffer];
-}
-
-GLOBALFUNC si4b vSonyGetSize(ui4b Drive_No, ui5b *Sony_Count)
-{
-    return [_vmacAppSharedInstance sizeOfDrive:Drive_No count:Sony_Count];
-}
-
-GLOBALFUNC si4b vSonyEject(ui4b Drive_No) {
-    return [_vmacAppSharedInstance ejectDrive:Drive_No];
-}
 
 #if 0
 #pragma mark -
@@ -145,7 +99,7 @@ GLOBALFUNC si4b vSonyEject(ui4b Drive_No) {
 
 #if MySoundEnabled
 #define SOUND_SAMPLERATE 22255
-#define kLn2SoundBuffers 4 /* kSoundBuffers must be a power of two */
+#define kLn2SoundBuffers 4 /* kSoundBuffers must be a power of two, must have at least 2^2 buffers */
 #define kSoundBuffers (1 << kLn2SoundBuffers)
 #define kSoundBuffMask (kSoundBuffers - 1)
 #define kLn2BuffLen 9
@@ -154,9 +108,12 @@ GLOBALFUNC si4b vSonyEject(ui4b Drive_No) {
 #define kBufferSize (1UL << kLnBuffSz)
 #define kBufferMask (kBufferSize - 1)
 #define dbhBufferSize (kBufferSize + SOUND_LEN)
+#define DesiredMinFilledSoundBuffs 4
 
 static int curFillBuffer = 0;
+static int curReadBuffer = 0;
 static int numFullBuffers = 0;
+static char sndBuffer[kSoundBuffers][SOUND_LEN];
 
 #define FillWithSilence(p,n,v) for (int fws_i = n; --fws_i >= 0;) *p++ = v
 
@@ -168,12 +125,26 @@ struct {
     AudioQueueBufferRef           mBuffers[kSoundBuffers];
 } aq;
 
+LOCALPROC MySound_SecondNotify(void)
+{
+    if (!aq.mIsRunning) return;
+    if (numFullBuffers > DesiredMinFilledSoundBuffs) {
+        ++CurEmulatedTime;
+    } else if (numFullBuffers < DesiredMinFilledSoundBuffs) {
+        --CurEmulatedTime;
+    }
+}
+
 void MySound_Callback (void *data, AudioQueueRef mQueue, AudioQueueBufferRef mBuffer) {
     mBuffer->mAudioDataByteSize = SOUND_LEN;
+    char *mAudioData = mBuffer->mAudioData;
     if (numFullBuffers == 0) {
-        char *audioData = mBuffer->mAudioData;
-        FillWithSilence(audioData, SOUND_LEN, 0x80);
-    } else numFullBuffers--;
+        FillWithSilence(mAudioData, SOUND_LEN, 0x80);
+    } else {
+        memcpy(mAudioData, sndBuffer[curReadBuffer], SOUND_LEN);
+        numFullBuffers--;
+        curReadBuffer = (curReadBuffer+1) & kSoundBuffMask;
+    }
     AudioQueueEnqueueBuffer(mQueue, mBuffer, 0, NULL);
 }
 
@@ -219,10 +190,9 @@ GLOBALPROC MySound_Stop (void) {
 GLOBALFUNC ui3p GetCurSoundOutBuff(void) {
     if (!aq.mIsRunning) return nullpr;
     if (numFullBuffers == kSoundBuffers) return nullpr;
-    curFillBuffer ++;
-    curFillBuffer &= kSoundBuffMask;
+    curFillBuffer = (curFillBuffer+1) & kSoundBuffMask;
     numFullBuffers ++;
-    return aq.mBuffers[curFillBuffer]->mAudioData;
+    return sndBuffer[curFillBuffer];
 }
 #else
 
@@ -231,3 +201,157 @@ GLOBALFUNC ui3p GetCurSoundOutBuff(void) {
 }
 
 #endif
+
+#if 0
+#pragma mark -
+#pragma mark Emulation
+#endif
+
+LOCALPROC IncrNextTime(void)
+{
+    /* increment NextTime by one tick */
+    NextTimeUsec += MyInvTimeStep;
+    if (NextTimeUsec >= UsecPerSec) {
+        NextTimeUsec -= UsecPerSec;
+        NextTimeSec += 1;
+    }
+}
+
+LOCALPROC InitNextTime(void)
+{
+    NextTimeSec = LastTimeSec;
+    NextTimeUsec = LastTimeUsec;
+    IncrNextTime();
+}
+
+LOCALPROC GetCurrentTicks(void)
+{
+    struct timeval t;
+    gettimeofday(&t, NULL);
+    LastTimeSec = (ui5b)t.tv_sec;
+    LastTimeUsec = (ui5b)t.tv_usec;
+}
+
+void StartUpTimeAdjust (void)
+{
+    GetCurrentTicks();
+    InitNextTime();
+}
+
+LOCALFUNC si5b GetTimeDiff(void)
+{
+    return ((si5b)(LastTimeSec - NextTimeSec)) * UsecPerSec
+        + ((si5b)(LastTimeUsec - NextTimeUsec));
+}
+
+LOCALFUNC blnr CheckDateTime (void)
+{
+    ui5b NewMacDate = time(NULL) + MacDateDiff;
+    if (NewMacDate != CurMacDateInSeconds) {
+        CurMacDateInSeconds = NewMacDate;
+        return trueblnr;
+    }
+    return falseblnr;
+}
+
+LOCALPROC UpdateTrueEmulatedTime(void)
+{
+    si5b TimeDiff;
+    
+    GetCurrentTicks();
+    
+    TimeDiff = GetTimeDiff();
+    if (TimeDiff >= 0) {
+        if (TimeDiff > 4 * MyInvTimeStep) {
+            /* emulation interrupted, forget it */
+            ++TrueEmulatedTime;
+            InitNextTime();
+        } else {
+            do {
+                ++TrueEmulatedTime;
+                IncrNextTime();
+                TimeDiff -= UsecPerSec;
+            } while (TimeDiff >= 0);
+        }
+    } else if (TimeDiff < - 2 * MyInvTimeStep) {
+        /* clock goofed if ever get here, reset */
+        InitNextTime();
+    }
+}
+
+GLOBALFUNC blnr ExtraTimeNotOver(void)
+{
+    UpdateTrueEmulatedTime();
+    return TrueEmulatedTime == OnTrueTime;
+}
+
+LOCALPROC RunEmulatedTicksToTrueTime(void)
+{
+    si3b n;
+    SpeedLimit = falseblnr;
+    if (CheckDateTime()) {
+    #if MySoundEnabled
+            MySound_SecondNotify();
+    #endif
+    }
+    
+    n = OnTrueTime - CurEmulatedTime;
+    if (n > 0) {
+        if (n > 8) {
+            /* emulation not fast enough */
+            n = 8;
+            CurEmulatedTime = OnTrueTime - n;
+        }
+        
+        do {
+            DoEmulateOneTick();
+            ++CurEmulatedTime;
+        } while (ExtraTimeNotOver() && (--n > 0));
+        
+        updateScreen(n);
+    }
+}
+
+void runTick (CFRunLoopTimerRef timer, void* info)
+{
+    if (SpeedStopped) return;
+    
+    UpdateTrueEmulatedTime();
+    OnTrueTime = TrueEmulatedTime;
+    RunEmulatedTicksToTrueTime();
+}
+
+#if 0
+#pragma mark -
+#pragma mark Misc
+#endif
+
+GLOBALPROC MyMoveBytes(anyp srcPtr, anyp destPtr, si5b byteCount)
+{
+    memcpy((char *)destPtr, (char *)srcPtr, byteCount);
+}
+
+#if 0
+#pragma mark -
+#pragma mark Floppy Driver
+#endif
+
+GLOBALFUNC si4b vSonyRead(void *Buffer, ui4b Drive_No, ui5b Sony_Start, ui5b *Sony_Count)
+{
+    return [_vmacAppSharedInstance readFromDrive:Drive_No start:Sony_Start count:Sony_Count buffer:Buffer];
+}
+
+GLOBALFUNC si4b vSonyWrite(void *Buffer, ui4b Drive_No, ui5b Sony_Start, ui5b *Sony_Count)
+{
+    return [_vmacAppSharedInstance writeToDrive:Drive_No start:Sony_Start count:Sony_Count buffer:Buffer];
+}
+
+GLOBALFUNC si4b vSonyGetSize(ui4b Drive_No, ui5b *Sony_Count)
+{
+    return [_vmacAppSharedInstance sizeOfDrive:Drive_No count:Sony_Count];
+}
+
+GLOBALFUNC si4b vSonyEject(ui4b Drive_No) {
+    return [_vmacAppSharedInstance ejectDrive:Drive_No];
+}
+
