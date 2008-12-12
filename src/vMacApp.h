@@ -1,6 +1,7 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 #import <UIKit/UIAlertView.h>
+#import <AudioToolbox/AudioToolbox.h>
 #import "KeyboardView.h"
 
 #import "SYSDEPNS.h"
@@ -64,6 +65,7 @@ typedef enum Direction {
     NSString*       drivePath[NumDrives];
     NSData*         romData;
     NSArray*        searchPaths;
+    SystemSoundID   ejectSound;
     
     CFRunLoopTimerRef   tickTimer;
     CFAbsoluteTime      aTimeBase;

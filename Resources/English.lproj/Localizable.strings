@@ -21,7 +21,8 @@
 "SettingsKeyboard" = "Keyboard";
 "SettingsKeyboardOpacity" = "Opacity";
 "SettingsSound" = "Sound";
-"SettingsSoundEnable" = "Enable";
+"SettingsSoundEnable" = "Mac Sound";
+"SettingsSoundDiskEject" = "Disk Eject";
 
 /* global */
 "OK" = "OK";

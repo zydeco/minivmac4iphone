@@ -18,13 +18,15 @@ IMPORTFUNC blnr InitEmulation(void);
     _vmacAppSharedInstance = self;
     
     // initialize stuff
+    NSBundle * mb = [NSBundle mainBundle];
     openAlerts = [[NSMutableSet setWithCapacity:5] retain];
     searchPaths = [[NSArray arrayWithObjects:
-                    [[NSBundle mainBundle] resourcePath],
+                    [mb resourcePath],
                     [NSHomeDirectory() stringByAppendingPathComponent:@"Library/MacOSClassic"],
                     @"/Library/MacOSClassic",
                     nil] retain];
     initOk = [self initEmulation];
+    AudioServicesCreateSystemSoundID((CFURLRef)[NSURL fileURLWithPath:[mb pathForResource:@"diskEject" ofType:@"aiff"]] ,&ejectSound);
     
     // initialize defaults
     [self initPreferences];
@@ -47,6 +49,7 @@ IMPORTFUNC blnr InitEmulation(void);
     [openAlerts release];
     [romData release];
     [searchPaths release];
+    AudioServicesDisposeSystemSoundID(ejectSound);
     [super dealloc];
 }
 
@@ -83,6 +86,8 @@ IMPORTFUNC blnr InitEmulation(void);
         [defaults setInteger:dirUp|dirLeft forKey:@"ScreenPosition"];
     if ([defaults objectForKey:@"SoundEnabled"] == nil)
         [defaults setBool:YES forKey:@"SoundEnabled"];
+    if ([defaults objectForKey:@"DiskEjectSound"] == nil)
+        [defaults setBool:YES forKey:@"DiskEjectSound"];
     [defaults synchronize];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didChangePreferences:) name:@"preferencesUpdated" object:nil];
 }
@@ -218,6 +223,9 @@ IMPORTFUNC blnr InitEmulation(void);
     }
     drivePath[driveNum] = [path retain];
     numInsertedDisks++;
+    
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"diskInserted" object:self];
+    
     return YES; 
 }
 
@@ -250,6 +258,9 @@ IMPORTFUNC blnr InitEmulation(void);
     
     [fh closeFile];
     [fh release];
+    
+    if ([defaults boolForKey:@"DiskEjectSound"]) AudioServicesPlaySystemSound(ejectSound);
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"diskEjected" object:self];
     
     return 0;
 }

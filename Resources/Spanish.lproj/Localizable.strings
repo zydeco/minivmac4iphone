@@ -21,7 +21,8 @@
 "SettingsKeyboard" = "Teclado";
 "SettingsKeyboardOpacity" = "Opacidad";
 "SettingsSound" = "Sonido";
-"SettingsSoundEnable" = "Activar";
+"SettingsSoundEnable" = "Sonido Mac";
+"SettingsSoundDiskEject" = "Expulsar Disco";
 
 /* global */
 "OK" = "OK";

@@ -131,7 +131,7 @@ extern NSString *kUIButtonBarButtonType;
     if (group == settingsGroupKeyboard)
         return [layouts count] + 1;
     else if (group == settingsGroupSound)
-        return 1;
+        return 2;
     else if (group == settingsGroupVersion)
         return 1;
 }
@@ -174,14 +174,26 @@ extern NSString *kUIButtonBarButtonType;
             [cell setControl:[sc autorelease]];
         }
     } else if (group == settingsGroupSound) {
-        cell = [[UIPreferencesControlTableCell alloc] init];
-        [cell setTitle:NSLocalizedString(@"SettingsSoundEnable", nil)];
-        [cell setShowSelection: NO];
-        UISwitchControl * sc = [[UISwitchControl alloc] init];
-        [sc addTarget:self action:@selector(soundEnabledChanged:) forEvents:4096];
-        [sc setOrigin:CGPointMake(127, 10)];
-        [sc setValue: [defaults boolForKey:@"SoundEnabled"]?1.0f:0.0f];
-        [cell setControl:[sc autorelease]];
+        if (row == 0) {
+            cell = [[UIPreferencesControlTableCell alloc] init];
+            [cell setTitle:NSLocalizedString(@"SettingsSoundEnable", nil)];
+            [cell setShowSelection: NO];
+            UISwitchControl * sc = [[UISwitchControl alloc] init];
+            [sc addTarget:self action:@selector(soundEnabledChanged:) forEvents:4096];
+            [sc setOrigin:CGPointMake(127, 10)];
+            [sc setValue: [defaults boolForKey:@"SoundEnabled"]?1.0f:0.0f];
+            [cell setControl:[sc autorelease]];
+        } else if (row == 1) {
+            cell = [[UIPreferencesControlTableCell alloc] init];
+            [cell setTitle:NSLocalizedString(@"SettingsSoundDiskEject", nil)];
+            [cell setShowSelection: NO];
+            UISwitchControl * sc = [[UISwitchControl alloc] init];
+            [sc addTarget:self action:@selector(soundEnabledChanged:) forEvents:4096];
+            [sc setOrigin:CGPointMake(127, 10)];
+            [sc setValue: [defaults boolForKey:@"DiskEjectSound"]?1.0f:0.0f];
+            [cell setControl:[sc autorelease]];
+        }
+        
     } else if (group == settingsGroupVersion) {
         cell = [[UIPreferencesTableCell alloc] init];
         NSString* bundleVersion = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"];
