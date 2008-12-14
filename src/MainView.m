@@ -173,12 +173,9 @@
 }
 
 - (void)scheduleMouseClickAt:(Point)loc {
-    static int eger = 0;
-    NSLog(@"Scheduling click %d", eger++);
     if (clickScheduled) {
         [MainView cancelPreviousPerformRequestsWithTarget:self selector:@selector(mouseClick) object:nil];
         [self mouseClick];
-        NSLog(@"Double click");
     }
     clickScheduled = YES;
     clickLoc = loc;
