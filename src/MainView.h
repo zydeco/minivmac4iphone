@@ -21,6 +21,8 @@
     
     // mouse
     BOOL            trackpadMode, trackpadClick, trackpadDrag;
+    BOOL            clickScheduled;
+    Point           clickLoc;
     NSTimeInterval  lastMouseTime, lastMouseClick;
     Point           lastMouseLoc;
     Point           mouseOffset;
@@ -31,6 +33,9 @@
 - (void)didChangePreferences:(NSNotification *)aNotification;
 
 - (Point)mouseLocForEvent:(GSEventRef)event;
+- (void)scheduleMouseClickAt:(Point)mouseLoc;
+- (void)cancelMouseClick;
+- (void)mouseClick;
 
 - (void)toggleScreenSize;
 - (void)scrollScreenViewTo:(Direction)scroll;

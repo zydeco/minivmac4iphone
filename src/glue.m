@@ -33,7 +33,7 @@ ui5b MacDateDiff;
 #define UsecPerSec 1000000
 #define MyInvTimeStep 16626 /* UsecPerSec / 60.14742 */
 LOCALVAR ui5b TrueEmulatedTime = 0;
-LOCALVAR ui5b CurEmulatedTime = 0;
+ui5b CurEmulatedTime = 0;
 LOCALVAR ui5b OnTrueTime = 0;
 LOCALVAR ui5b LastTimeSec, NextTimeSec;
 LOCALVAR ui5b LastTimeUsec, NextTimeUsec;

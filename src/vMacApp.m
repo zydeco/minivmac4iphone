@@ -134,6 +134,12 @@ IMPORTFUNC blnr InitEmulation(void);
     CurMouseV = CLAMP(CurMouseV + mouseMotion.v, 0, vMacScreenHeight);
 }
 
+- (void)moveMouse:(Point)mouseMotion button:(BOOL)pressed {
+    CurMouseH = CLAMP(CurMouseH + mouseMotion.h, 0, vMacScreenWidth);
+    CurMouseV = CLAMP(CurMouseV + mouseMotion.v, 0, vMacScreenHeight);
+    CurMouseButton = pressed;
+}
+
 - (Point)mouseLoc {
     Point pt;
     pt.h = CurMouseH;

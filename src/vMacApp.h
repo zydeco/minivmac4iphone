@@ -17,8 +17,10 @@
 #define CGPointCenter(a, b) CGPointMake((a.x+b.x)/2, (a.y+b.y)/2)
 #define MOUSE_DBLCLICK_TIME     0.7     // seconds, NSTimeInterval
 #define MOUSE_CLICK_DELAY       0.05    // seconds, NSTimeInterval
-#define TRACKPAD_CLICK_DELAY    0.50    // seconds, NSTimeInterval
-#define MOUSE_LOC_THRESHOLD     100     // pixel distance in mac screen, squared, integer
+#define TRACKPAD_CLICK_DELAY    0.30    // seconds, NSTimeInterval
+#define TRACKPAD_CLICK_TIME     0.30    // if finger is held down for longer, it's not a click
+#define TRACKPAD_DRAG_DELAY     0.50    // two fast taps to engage in draggnig
+#define MOUSE_LOC_THRESHOLD     500     // pixel distance in mac screen, squared, integer
 #define kScreenEdgeSize         20      // edge size for scrolling
 #define kScreenRectFullScreen   CGRectMake(0.f, 0.f, 480.f, 320.f)
 #define kScreenRectRealSize     CGRectMake(0.f, 0.f, vMacScreenWidth, vMacScreenHeight)
@@ -53,6 +55,7 @@ typedef enum Direction {
 - (void)setMouseLoc:(Point)mouseLoc button:(BOOL)pressed;
 - (void)setMouseLoc:(Point)mouseLoc;
 - (void)moveMouse:(Point)mouseMotion;
+- (void)moveMouse:(Point)mouseMotion button:(BOOL)pressed;
 - (Point)mouseLoc;
 - (BOOL)mouseButton;
 @end
@@ -115,6 +118,7 @@ extern short* SurfaceScrnBuf;
 extern short* pixelConversionTable;
 extern id _gScreenView;
 extern ui5b MacDateDiff;
+extern ui5b CurEmulatedTime;
 
 bool MySound_Init (void);
 GLOBALPROC MySound_Start (void);
