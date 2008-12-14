@@ -20,12 +20,15 @@
     Direction       screenPosition;
     
     // mouse
-    NSTimeInterval  lastMouseTime;
+    BOOL            trackpadMode, trackpadClick, trackpadDrag;
+    NSTimeInterval  lastMouseTime, lastMouseClick;
     Point           lastMouseLoc;
     Point           mouseOffset;
     // gesture
     CGPoint         gestureStart;
 }
+
+- (void)didChangePreferences:(NSNotification *)aNotification;
 
 - (Point)mouseLocForEvent:(GSEventRef)event;
 

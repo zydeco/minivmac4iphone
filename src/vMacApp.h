@@ -15,17 +15,19 @@
 
 #define PointDistanceSq(a, b) ((((int)a.h-(int)b.h)*((int)a.h-(int)b.h)) + (((int)a.v-(int)b.v)*((int)a.v-(int)b.v)))
 #define CGPointCenter(a, b) CGPointMake((a.x+b.x)/2, (a.y+b.y)/2)
-#define MOUSE_DBLCLICK_HELPER   1       // enable double-click assistance
 #define MOUSE_DBLCLICK_TIME     0.7     // seconds, NSTimeInterval
 #define MOUSE_CLICK_DELAY       0.05    // seconds, NSTimeInterval
+#define TRACKPAD_CLICK_DELAY    0.50    // seconds, NSTimeInterval
 #define MOUSE_LOC_THRESHOLD     100     // pixel distance in mac screen, squared, integer
 #define kScreenEdgeSize         20      // edge size for scrolling
 #define kScreenRectFullScreen   CGRectMake(0.f, 0.f, 480.f, 320.f)
 #define kScreenRectRealSize     CGRectMake(0.f, 0.f, vMacScreenWidth, vMacScreenHeight)
 
-#ifndef ABS
-#define ABS(x) ((x>0)?(x):(-1*(x)))
-#endif
+#undef ABS
+#define ABS(x) (((x)>0)? (x) : -(x))
+
+#undef CLAMP
+#define CLAMP(x, lo, hi) (((x) > (hi))? (hi) : (((x) < (lo))? (lo) : (x)))
 
 typedef enum Direction {
     dirUp =     1 << 0,
@@ -50,6 +52,9 @@ typedef enum Direction {
 - (void)setMouseButtonUp;
 - (void)setMouseLoc:(Point)mouseLoc button:(BOOL)pressed;
 - (void)setMouseLoc:(Point)mouseLoc;
+- (void)moveMouse:(Point)mouseMotion;
+- (Point)mouseLoc;
+- (BOOL)mouseButton;
 @end
 
 @class MainView;

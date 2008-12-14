@@ -7,6 +7,7 @@
         // initialization
         NSUserDefaults * defaults = [NSUserDefaults standardUserDefaults];
         [self setBackgroundColor:[UIColor blackColor]];
+        [self didChangePreferences:nil];
         
         // add screen view
         CGRect screenRect;
@@ -37,12 +38,20 @@
         // add settings view
         settingsView = [[SettingsView alloc] initWithFrame:SettingsViewFrameHidden];
         [self addSubview:settingsView];
+        
+        // register for notifications
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didChangePreferences:) name:@"preferencesUpdated" object:nil];
     }
     return self;
 }
 
 - (void) dealloc {
     [super dealloc];
+}
+
+- (void)didChangePreferences:(NSNotification *)aNotification {
+    NSUserDefaults * defaults = [NSUserDefaults standardUserDefaults];
+    trackpadMode = [defaults boolForKey:@"TrackpadMode"];
 }
 
 #if 0
@@ -67,60 +76,99 @@
     }
     
     Point loc = [self mouseLocForEvent:event];
-    
-    // mouse button must be up
-    [[_vmacAppSharedInstance class] cancelPreviousPerformRequestsWithTarget:_vmacAppSharedInstance selector:@selector(setMouseButtonUp) object:nil];
-    [_vmacAppSharedInstance setMouseButton:NO];
-    
-    #if defined(MOUSE_DBLCLICK_HELPER) && MOUSE_DBLCLICK_HELPER
     NSTimeInterval mouseTime = GSEventGetTimestamp(event);
+    
     // help double clicking: click in the same place if it was fast and near
-    if (((mouseTime - lastMouseTime) < MOUSE_DBLCLICK_TIME) &&
+    if (((mouseTime - lastMouseClick) < MOUSE_DBLCLICK_TIME) &&
         (PointDistanceSq(loc, lastMouseLoc) < MOUSE_LOC_THRESHOLD)) {
         loc = lastMouseLoc;
+        // start trackpad dragging
+        if (trackpadMode) {
+            trackpadDrag = YES;
+            [_vmacAppSharedInstance setMouseButtonDown];
+        }
     }
-    lastMouseLoc = loc;
-    lastMouseTime = mouseTime;
-    #endif
     
-    [_vmacAppSharedInstance setMouseLoc:loc];
-    [_vmacAppSharedInstance performSelector:@selector(setMouseButtonDown) withObject:nil afterDelay:MOUSE_CLICK_DELAY];
+    if (trackpadMode) {
+        trackpadClick = YES;
+    } else {
+        [_vmacAppSharedInstance setMouseLoc:loc];
+        [_vmacAppSharedInstance performSelector:@selector(setMouseButtonDown) withObject:nil afterDelay:MOUSE_CLICK_DELAY];
+    }
+    
+    lastMouseLoc = loc;
+    lastMouseTime = lastMouseClick = mouseTime;
     [super mouseDown:event];
 }
 
 - (void)mouseUp:(GSEventRef)event {
     Point loc = [self mouseLocForEvent:event];
+    NSTimeInterval mouseTime = GSEventGetTimestamp(event);
     
-    #if defined(MOUSE_DBLCLICK_HELPER) && MOUSE_DBLCLICK_HELPER
     // mouseUp in the same place if it's near enough
     if (PointDistanceSq(loc, lastMouseLoc) < MOUSE_LOC_THRESHOLD) {
         loc = lastMouseLoc;
     }
-    lastMouseLoc = loc;
-    #endif
     
-    [_vmacAppSharedInstance setMouseLoc:loc];
-    [_vmacAppSharedInstance performSelector:@selector(setMouseButtonUp) withObject:nil afterDelay:MOUSE_CLICK_DELAY];
+    if (trackpadMode) {
+        if (trackpadClick && ((mouseTime - lastMouseTime) < TRACKPAD_CLICK_DELAY)) {
+            [_vmacAppSharedInstance setMouseButtonDown];
+            DoEmulateOneTick();
+            DoEmulateOneTick();
+        }
+        trackpadClick = NO;
+        trackpadDrag = NO;
+        [_vmacAppSharedInstance setMouseButtonUp];
+    } else {
+        [_vmacAppSharedInstance setMouseLoc:loc];
+        [_vmacAppSharedInstance performSelector:@selector(setMouseButtonUp) withObject:nil afterDelay:MOUSE_CLICK_DELAY];
+    }
+    
+    lastMouseLoc = loc;
     [super mouseUp:event];
 }
 
 - (void)mouseDragged:(GSEventRef)event {
-    // mouse button must be pressed
-    [[_vmacAppSharedInstance class] cancelPreviousPerformRequestsWithTarget:_vmacAppSharedInstance selector:@selector(setMouseButtonDown) object:nil];
-    [_vmacAppSharedInstance setMouseButton:YES];
+    if (trackpadMode) {
+        trackpadClick = NO;
+        [_vmacAppSharedInstance setMouseButton: trackpadDrag];
+    } else {
+        // mouseDown at current position NOW
+        [vMacApp cancelPreviousPerformRequestsWithTarget:_vmacAppSharedInstance selector:@selector(setMouseButtonDown) object:nil];
+        [_vmacAppSharedInstance setMouseButton:YES];
+        DoEmulateOneTick();
+    }
     
-    #if defined(MOUSE_DBLCLICK_HELPER) && MOUSE_DBLCLICK_HELPER
-    lastMouseTime = 0;
-    #endif
+    NSTimeInterval mouseTime = GSEventGetTimestamp(event);
+    Point loc = [self mouseLocForEvent:event];
     
-    [_vmacAppSharedInstance setMouseLoc:[self mouseLocForEvent:event] button:YES];
+    if (trackpadMode) {
+        Point locDiff = loc;
+        locDiff.h -= lastMouseLoc.h;
+        locDiff.v -= lastMouseLoc.v;
+        // acceleration
+        NSTimeInterval timeDiff = 100 * (mouseTime - lastMouseTime);
+        NSTimeInterval accel = 1 / (0.15 + ((timeDiff * timeDiff)/8));
+        locDiff.h *= accel;
+        locDiff.v *= accel;
+        [_vmacAppSharedInstance moveMouse:locDiff];
+    } else {
+        [_vmacAppSharedInstance setMouseLoc:loc button:YES];
+    }
+    
+    lastMouseTime = mouseTime;
+    lastMouseLoc = loc;
     [super mouseDragged:event];
 }
 
 - (Point)mouseLocForEvent:(GSEventRef)event {
     CGRect r = GSEventGetLocationInWindow(event);
     Point pt;
-    if (screenSizeToFit) {
+    if (trackpadMode) {
+        // same location
+        pt.h = r.origin.x;
+        pt.v = r.origin.y;
+    } else if (screenSizeToFit) {
         // scale
         pt.h = r.origin.x * (vMacScreenWidth / 480.0);
         pt.v = r.origin.y * (vMacScreenHeight / 320.0);
@@ -186,7 +234,7 @@
 
 - (void)gestureStarted:(GSEventRef)event {
     // cancel mouse button
-    [[_vmacAppSharedInstance class] cancelPreviousPerformRequestsWithTarget:_vmacAppSharedInstance selector:@selector(setMouseButtonDown) object:nil];
+    [vMacApp cancelPreviousPerformRequestsWithTarget:_vmacAppSharedInstance selector:@selector(setMouseButtonDown) object:nil];
     [_vmacAppSharedInstance setMouseButton:NO];
     
     // start gesture

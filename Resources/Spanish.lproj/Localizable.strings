@@ -23,6 +23,8 @@
 "SettingsSound" = "Sonido";
 "SettingsSoundEnable" = "Sonido Mac";
 "SettingsSoundDiskEject" = "Expulsar Disco";
+"SettingsMouse" = "Ratón";
+"SettingsMouseTrackpadMode" = "Trackpad";
 
 /* global */
 "OK" = "OK";

@@ -128,24 +128,34 @@ extern NSString *kUIButtonBarButtonType;
 }
 
 - (int)preferencesTable:(UIPreferencesTable*)aTable numberOfRowsInGroup:(int)group {
-    if (group == settingsGroupKeyboard)
+    switch(group) {
+    case settingsGroupKeyboard:
         return [layouts count] + 1;
-    else if (group == settingsGroupSound)
-        return 2;
-    else if (group == settingsGroupVersion)
+    case settingsGroupMouse:
         return 1;
+    case settingsGroupSound:
+        return 2;
+    case settingsGroupVersion:
+        return 1;
+    }
 }
 
 - (UIPreferencesTableCell*)preferencesTable:(UIPreferencesTable*)aTable cellForGroup:(int)group {
     UIPreferencesTableCell * cell = [[[UIPreferencesTableCell alloc] init] autorelease];
     
-    if (group == settingsGroupKeyboard)
-        [cell setTitle:NSLocalizedString(@"SettingsKeyboard", nil)];
-    else if (group == settingsGroupSound)
-        [cell setTitle:NSLocalizedString(@"SettingsSound", nil)];
-    else
-        cell = nil;
-    
+    switch(group) {
+        case settingsGroupKeyboard:
+            [cell setTitle:NSLocalizedString(@"SettingsKeyboard", nil)];
+            break;
+        case settingsGroupMouse:
+            [cell setTitle:NSLocalizedString(@"SettingsMouse", nil)];
+            break;
+        case settingsGroupSound:
+            [cell setTitle:NSLocalizedString(@"SettingsSound", nil)];
+            break;
+        default:
+            cell = nil;
+    }
     return cell;
 }
 
@@ -173,6 +183,15 @@ extern NSString *kUIButtonBarButtonType;
             [sc setContinuous:YES];
             [cell setControl:[sc autorelease]];
         }
+    } else if (group == settingsGroupMouse) {
+        cell = [[UIPreferencesControlTableCell alloc] init];
+        [cell setTitle:NSLocalizedString(@"SettingsMouseTrackpadMode", nil)];
+        [cell setShowSelection: NO];
+        UISwitchControl * sc = [[UISwitchControl alloc] init];
+        [sc addTarget:self action:@selector(trackpadModeChanged:) forEvents:4096];
+        [sc setOrigin:CGPointMake(127, 10)];
+        [sc setValue: [defaults boolForKey:@"TrackpadMode"]?1.0f:0.0f];
+        [cell setControl:[sc autorelease]];
     } else if (group == settingsGroupSound) {
         if (row == 0) {
             cell = [[UIPreferencesControlTableCell alloc] init];
@@ -248,6 +267,13 @@ extern NSString *kUIButtonBarButtonType;
 - (void)soundDiskEjectChanged:(UIPreferencesControlTableCell*)cell {
     UISwitchControl* control = [cell control];
     [defaults setBool:([control value] == 1.0) forKey:@"DiskEjectSound"];
+    [defaults synchronize];
+    [self notifyPrefsUpdate];
+}
+
+- (void)trackpadModeChanged:(UIPreferencesControlTableCell*)cell {
+    UISwitchControl* control = [cell control];
+    [defaults setBool:([control value] == 1.0) forKey:@"TrackpadMode"];
     [defaults synchronize];
     [self notifyPrefsUpdate];
 }

@@ -32,7 +32,7 @@ IMPORTFUNC blnr InitEmulation(void);
     [self initPreferences];
     
     // create window
-    [self setStatusBarOrientation:3 animated:NO]; // UIInterfaceOrientationLandscapeRight
+    [self setStatusBarOrientation:UIInterfaceOrientationLandscapeRight animated:NO];
     window = [[UIWindow alloc] initWithFrame: CGRectMake(0,0,480,320)];
     [window setTransform:CGAffineTransformMake(0, 1, -1, 0, -80, 80)];
     mainView = [[MainView alloc] initWithFrame: CGRectMake(0,0,480,320)];
@@ -88,6 +88,8 @@ IMPORTFUNC blnr InitEmulation(void);
         [defaults setBool:YES forKey:@"SoundEnabled"];
     if ([defaults objectForKey:@"DiskEjectSound"] == nil)
         [defaults setBool:YES forKey:@"DiskEjectSound"];
+    if ([defaults objectForKey:@"TrackpadMode"] == nil)
+        [defaults setBool:NO forKey:@"TrackpadMode"];
     [defaults synchronize];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didChangePreferences:) name:@"preferencesUpdated" object:nil];
 }
@@ -115,14 +117,30 @@ IMPORTFUNC blnr InitEmulation(void);
 }
 
 - (void)setMouseLoc:(Point)mouseLoc {
-    CurMouseH = mouseLoc.h;
-    CurMouseV = mouseLoc.v;
+    CurMouseH = CLAMP(mouseLoc.h, 0, vMacScreenWidth);
+    CurMouseV = CLAMP(mouseLoc.v, 0, vMacScreenHeight);
 }
 
 - (void)setMouseLoc:(Point)mouseLoc button:(BOOL)pressed {
-    CurMouseH = mouseLoc.h;
-    CurMouseV = mouseLoc.v;
+    CurMouseH = CLAMP(mouseLoc.h, 0, vMacScreenWidth);
+    CurMouseV = CLAMP(mouseLoc.v, 0, vMacScreenHeight);
     CurMouseButton = pressed;
+}
+
+- (void)moveMouse:(Point)mouseMotion {
+    CurMouseH = CLAMP(CurMouseH + mouseMotion.h, 0, vMacScreenWidth);
+    CurMouseV = CLAMP(CurMouseV + mouseMotion.v, 0, vMacScreenHeight);
+}
+
+- (Point)mouseLoc {
+    Point pt;
+    pt.h = CurMouseH;
+    pt.v = CurMouseV;
+    return pt;
+}
+
+- (BOOL)mouseButton {
+    return CurMouseButton;
 }
 
 #if 0

@@ -23,6 +23,8 @@
 "SettingsSound" = "Sound";
 "SettingsSoundEnable" = "Mac Sound";
 "SettingsSoundDiskEject" = "Disk Eject";
+"SettingsMouse" = "Mouse";
+"SettingsMouseTrackpadMode" = "Trackpad";
 
 /* global */
 "OK" = "OK";
