@@ -134,7 +134,7 @@ extern NSString *kUIButtonBarButtonType;
     case settingsGroupMouse:
         return 1;
     case settingsGroupSound:
-        return 2;
+        return 3;
     case settingsGroupVersion:
         return 1;
     }
@@ -160,57 +160,73 @@ extern NSString *kUIButtonBarButtonType;
 }
 
 - (UIPreferencesTableCell*)preferencesTable:(UIPreferencesTable*)aTable cellForRow:(int)row inGroup:(int)group {
+    UISwitchControl * swc;
+    UISliderControl * slc;
     id cell;
     
     if (group == settingsGroupKeyboard) {
-        if (row < [layoutIDs count]) {
-            // keyboard layout
-            cell = [[UIPreferencesTableCell alloc] init];
-            [cell setTitle:[layouts objectForKey:[layoutIDs objectAtIndex:row]]];
-            [cell setChecked:[[layoutIDs objectAtIndex:row] isEqualToString:[defaults objectForKey:@"KeyboardLayout"]]];
-        } else {
+        switch (row - [layoutIDs count]) {
+        case 0:
             // keyboard alpha
             cell = [[UIPreferencesControlTableCell alloc] init];
             [cell setTitle:NSLocalizedString(@"SettingsKeyboardOpacity", nil)];
             [cell setShowSelection:NO];
-            UISliderControl * sc = [[UISliderControl alloc] initWithFrame: CGRectMake(96.0f, 4.0f, 130.0f, 40.0f)];
-            [sc addTarget:self action:@selector(keyboardAlphaChanged:) forEvents:4096];
-            [sc setAllowsTickMarkValuesOnly:NO];
-            [sc setMinValue:0.2];
-            [sc setMaxValue:1.0];
-            [sc setValue: [defaults floatForKey:@"KeyboardAlpha"]];
-            [sc setShowValue:NO];
-            [sc setContinuous:YES];
-            [cell setControl:[sc autorelease]];
+            slc = [[UISliderControl alloc] initWithFrame: CGRectMake(96.0f, 4.0f, 130.0f, 40.0f)];
+            [slc addTarget:self action:@selector(keyboardAlphaChanged:) forEvents:4096];
+            [slc setAllowsTickMarkValuesOnly:NO];
+            [slc setMinValue:0.2];
+            [slc setMaxValue:1.0];
+            [slc setValue: [defaults floatForKey:@"KeyboardAlpha"]];
+            [slc setShowValue:NO];
+            [slc setContinuous:YES];
+            [cell setControl:[slc autorelease]];
+            break;
+        default:
+            // keyboard layout
+            cell = [[UIPreferencesTableCell alloc] init];
+            [cell setTitle:[layouts objectForKey:[layoutIDs objectAtIndex:row]]];
+            [cell setChecked:[[layoutIDs objectAtIndex:row] isEqualToString:[defaults objectForKey:@"KeyboardLayout"]]];
         }
     } else if (group == settingsGroupMouse) {
         cell = [[UIPreferencesControlTableCell alloc] init];
         [cell setTitle:NSLocalizedString(@"SettingsMouseTrackpadMode", nil)];
         [cell setShowSelection: NO];
-        UISwitchControl * sc = [[UISwitchControl alloc] init];
-        [sc addTarget:self action:@selector(trackpadModeChanged:) forEvents:4096];
-        [sc setOrigin:CGPointMake(127, 10)];
-        [sc setValue: [defaults boolForKey:@"TrackpadMode"]?1.0f:0.0f];
-        [cell setControl:[sc autorelease]];
+        swc = [[UISwitchControl alloc] init];
+        [swc addTarget:self action:@selector(trackpadModeChanged:) forEvents:4096];
+        [swc setOrigin:CGPointMake(127, 10)];
+        [swc setValue: [defaults boolForKey:@"TrackpadMode"]?1.0f:0.0f];
+        [cell setControl:[swc autorelease]];
     } else if (group == settingsGroupSound) {
         if (row == 0) {
+            // mac sound
             cell = [[UIPreferencesControlTableCell alloc] init];
             [cell setTitle:NSLocalizedString(@"SettingsSoundEnable", nil)];
             [cell setShowSelection: NO];
-            UISwitchControl * sc = [[UISwitchControl alloc] init];
-            [sc addTarget:self action:@selector(soundEnabledChanged:) forEvents:4096];
-            [sc setOrigin:CGPointMake(127, 10)];
-            [sc setValue: [defaults boolForKey:@"SoundEnabled"]?1.0f:0.0f];
-            [cell setControl:[sc autorelease]];
+            swc = [[UISwitchControl alloc] init];
+            [swc addTarget:self action:@selector(soundEnabledChanged:) forEvents:4096];
+            [swc setOrigin:CGPointMake(127, 10)];
+            [swc setValue: [defaults boolForKey:@"SoundEnabled"]?1.0f:0.0f];
+            [cell setControl:[swc autorelease]];
         } else if (row == 1) {
+            // disk eject
             cell = [[UIPreferencesControlTableCell alloc] init];
             [cell setTitle:NSLocalizedString(@"SettingsSoundDiskEject", nil)];
             [cell setShowSelection: NO];
-            UISwitchControl * sc = [[UISwitchControl alloc] init];
-            [sc addTarget:self action:@selector(soundDiskEjectChanged:) forEvents:4096];
-            [sc setOrigin:CGPointMake(127, 10)];
-            [sc setValue: [defaults boolForKey:@"DiskEjectSound"]?1.0f:0.0f];
-            [cell setControl:[sc autorelease]];
+            swc = [[UISwitchControl alloc] init];
+            [swc addTarget:self action:@selector(soundDiskEjectChanged:) forEvents:4096];
+            [swc setOrigin:CGPointMake(127, 10)];
+            [swc setValue: [defaults boolForKey:@"DiskEjectSound"]?1.0f:0.0f];
+            [cell setControl:[swc autorelease]];
+        } else if (row == 2) {
+            // key sound
+            cell = [[UIPreferencesControlTableCell alloc] init];
+            [cell setTitle:NSLocalizedString(@"SettingsKeyboardSound", nil)];
+            [cell setShowSelection: NO];
+            swc = [[UISwitchControl alloc] init];
+            [swc addTarget:self action:@selector(keyboardSoundChanged:) forEvents:4096];
+            [swc setOrigin:CGPointMake(127, 10)];
+            [swc setValue: [defaults boolForKey:@"KeyboardSound"]?1.0f:0.0f];
+            [cell setControl:[swc autorelease]];
         }
         
     } else if (group == settingsGroupVersion) {
@@ -274,6 +290,13 @@ extern NSString *kUIButtonBarButtonType;
 - (void)trackpadModeChanged:(UIPreferencesControlTableCell*)cell {
     UISwitchControl* control = [cell control];
     [defaults setBool:([control value] == 1.0) forKey:@"TrackpadMode"];
+    [defaults synchronize];
+    [self notifyPrefsUpdate];
+}
+
+- (void)keyboardSoundChanged:(UIPreferencesControlTableCell*)cell {
+    UISwitchControl* control = [cell control];
+    [defaults setBool:([control value] == 1.0) forKey:@"KeyboardSound"];
     [defaults synchronize];
     [self notifyPrefsUpdate];
 }

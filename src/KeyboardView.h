@@ -1,4 +1,5 @@
 #import <UIKit/UIKit.h>
+#import <AudioToolbox/AudioToolbox.h>
 #import "KBKey.h"
 #import "SYSDEPNS.h"
 #import "MYOSGLUE.h"
@@ -14,12 +15,14 @@
 
 @interface KeyboardView : UIView {
     id <VirtualKeyboard> delegate;
-    NSDictionary*keyImages; // (up => (images...), down => (images...), hold (images...))
-    UIView      *keyboard[2]; // view, toggled view
-    NSArray     *keyMap[2], *currentKeyMap;
-    BOOL        stickyKeyDown[3]; // shift, option, command
-    NSString    *layout;
-    NSArray     *searchPaths;
+    NSDictionary    *keyImages; // (up => (images...), down => (images...), hold (images...))
+    UIView          *keyboard[2]; // view, toggled view
+    NSArray         *keyMap[2], *currentKeyMap;
+    BOOL            stickyKeyDown[3]; // shift, option, command
+    NSString        *layout;
+    NSArray         *searchPaths;
+    SystemSoundID   keySound;
+    BOOL            soundEnabled;
 }
 
 @property (nonatomic, assign) id <VirtualKeyboard> delegate;

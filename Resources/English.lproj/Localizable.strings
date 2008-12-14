@@ -20,6 +20,7 @@
 "Settings" = "Settings";
 "SettingsKeyboard" = "Keyboard";
 "SettingsKeyboardOpacity" = "Opacity";
+"SettingsKeyboardSound" = "Key Sound";
 "SettingsSound" = "Sound";
 "SettingsSoundEnable" = "Mac Sound";
 "SettingsSoundDiskEject" = "Disk Eject";

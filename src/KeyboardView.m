@@ -8,6 +8,9 @@
 - (id)initWithFrame:(CGRect)frame {
     if (self = [super initWithFrame:frame]) {
         // Initialization code
+        NSUserDefaults * defaults = [NSUserDefaults standardUserDefaults];
+        if (AudioServicesCreateSystemSoundID((CFURLRef)[NSURL fileURLWithPath:@"/System/Library/Frameworks/UIKit.framework/Tock.aiff"] ,&keySound) != noErr) keySound = 0;
+        soundEnabled = [defaults boolForKey:@"KeyboardSound"];
         
         for (int i = 0; i < 2; i++) {
             keyboard[i] = [[[UIImageView alloc] initWithImage:[UIImage imageNamed:@"KBBackground.png"]] retain];
@@ -16,7 +19,7 @@
         
         [self setUserInteractionEnabled: YES];
         [self loadImages];
-        [self setAlpha:[[NSUserDefaults standardUserDefaults] floatForKey:@"KeyboardAlpha"]];
+        [self setAlpha:[defaults floatForKey:@"KeyboardAlpha"]];
         [self setSearchPaths:[NSArray arrayWithObject:[[NSBundle mainBundle] resourcePath]]];
         
         // notification
@@ -31,6 +34,7 @@
     [keyMap[0] release];
     [keyMap[1] release];
     [keyImages release];
+    AudioServicesDisposeSystemSoundID(keySound);
     [super dealloc];
 }
 
@@ -117,6 +121,7 @@
     NSUserDefaults * defaults = [NSUserDefaults standardUserDefaults];
     self.layout = [defaults objectForKey:@"KeyboardLayout"];
     [self setAlpha: [defaults floatForKey:@"KeyboardAlpha"]];
+    soundEnabled = [defaults boolForKey:@"KeyboardSound"];
 }
 
 - (void)addKeys:(NSDictionary*)keys {
@@ -215,6 +220,7 @@
 #endif
 
 - (void)keyDown:(KBKey*)key type:(int)type scancode:(int)scancode {
+    if (soundEnabled && keySound) AudioServicesPlaySystemSound(keySound);
     if (type == KBKey_Toggle) {
         [self toggleKeyMap];
     } else if (IsStickyKey(type) && ![key isSelected]) {
