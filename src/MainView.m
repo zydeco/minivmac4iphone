@@ -83,7 +83,7 @@
         trackpadClick = YES;
         if ((mouseDiff <= TRACKPAD_DRAG_DELAY) &&
             (PointDistanceSq(loc, lastMouseLoc) < MOUSE_LOC_THRESHOLD)) {
-            trackpadDrag = YES;
+            mouseDrag = YES;
             [_vmacAppSharedInstance setMouseButtonDown];
         }
     } else {
@@ -109,15 +109,16 @@
     if (trackpadMode) {
         if (trackpadClick && (mouseDiff <= TRACKPAD_CLICK_TIME)) [self scheduleMouseClickAt:[_vmacAppSharedInstance mouseLoc]];
         trackpadClick = NO;
-        if (trackpadDrag) {
+        if (mouseDrag) {
             [_vmacAppSharedInstance setMouseButtonUp];
-            trackpadDrag = NO;
+            mouseDrag = NO;
         }
     } else {
         // mouseUp in the same place if it's near enough
         if (PointDistanceSq(loc, lastMouseLoc) < MOUSE_LOC_THRESHOLD) loc = lastMouseLoc;
         [_vmacAppSharedInstance setMouseLoc:loc];
         [_vmacAppSharedInstance performSelector:@selector(setMouseButtonUp) withObject:nil afterDelay:MOUSE_CLICK_DELAY];
+        mouseDrag = NO;
     }
     
     lastMouseLoc = loc;
@@ -138,14 +139,18 @@
         locDiff.h *= accel;
         locDiff.v *= accel;
         trackpadClick = NO;
-        [_vmacAppSharedInstance moveMouse:locDiff button:trackpadDrag];
+        [_vmacAppSharedInstance moveMouse:locDiff button:mouseDrag];
     } else {
-        // mouseDown at current position NOW
-        [vMacApp cancelPreviousPerformRequestsWithTarget:_vmacAppSharedInstance selector:@selector(setMouseButtonDown) object:nil];
-        [_vmacAppSharedInstance setMouseButton:YES];
-        DoEmulateOneTick();
-        DoEmulateOneTick();
-        [_vmacAppSharedInstance setMouseLoc:loc button:YES];
+        if (!mouseDrag) {
+            // start dragging, mouseDown at current position NOW
+            [vMacApp cancelPreviousPerformRequestsWithTarget:_vmacAppSharedInstance selector:@selector(setMouseButtonDown) object:nil];
+            [_vmacAppSharedInstance setMouseButton:YES];
+            DoEmulateOneTick();
+            DoEmulateOneTick();
+            CurEmulatedTime += 2;
+            mouseDrag = YES;
+        }
+        [_vmacAppSharedInstance setMouseLoc:loc];
     }
     
     lastMouseTime = mouseTime;
@@ -189,7 +194,7 @@
 
 - (void)mouseClick {
     clickScheduled = NO;
-    if (trackpadDrag) return;
+    if (mouseDrag) return;
     [_vmacAppSharedInstance setMouseLoc:clickLoc button:YES];
     DoEmulateOneTick();
     DoEmulateOneTick();
@@ -250,9 +255,9 @@
 }
 
 - (void)gestureStarted:(GSEventRef)event {
+    mouseDrag = NO;
     if (trackpadMode) {
         trackpadClick = NO;
-        trackpadDrag = NO;
     } else {
         [vMacApp cancelPreviousPerformRequestsWithTarget:_vmacAppSharedInstance selector:@selector(setMouseButtonDown) object:nil];
     }

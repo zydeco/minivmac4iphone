@@ -20,8 +20,8 @@
     Direction       screenPosition;
     
     // mouse
-    BOOL            trackpadMode, trackpadClick, trackpadDrag;
-    BOOL            clickScheduled;
+    BOOL            trackpadMode, trackpadClick;
+    BOOL            clickScheduled, mouseDrag;
     Point           clickLoc;
     NSTimeInterval  lastMouseTime, lastMouseClick;
     Point           lastMouseLoc;
