@@ -21,7 +21,6 @@
         screenSizeToFit = [defaults boolForKey:@"ScreenSizeToFit"];
         screenPosition = [defaults integerForKey:@"ScreenPosition"];
         [self scrollScreenViewTo:screenPosition];
-        mouseOffset.h = mouseOffset.v = 0;
         
         // add keyboard view
         keyboardView = [[KeyboardView alloc] initWithFrame:KeyboardViewFrameHidden];
