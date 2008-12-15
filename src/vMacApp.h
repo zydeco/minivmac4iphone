@@ -20,6 +20,9 @@
 #define TRACKPAD_CLICK_DELAY    0.30    // seconds, NSTimeInterval
 #define TRACKPAD_CLICK_TIME     0.30    // if finger is held down for longer, it's not a click
 #define TRACKPAD_DRAG_DELAY     0.50    // two fast taps to engage in draggnig
+#define TRACKPAD_ACCEL_N        1
+#define TRACKPAD_ACCEL_T        0.2
+#define TRACKPAD_ACCEL_D        20
 #define MOUSE_LOC_THRESHOLD     500     // pixel distance in mac screen, squared, integer
 #define kScreenEdgeSize         20      // edge size for scrolling
 #define kScreenRectFullScreen   CGRectMake(0.f, 0.f, 480.f, 320.f)

@@ -134,7 +134,7 @@
         locDiff.v -= lastMouseLoc.v;
         // acceleration
         NSTimeInterval timeDiff = 100 * (mouseTime - lastMouseTime);
-        NSTimeInterval accel = 1 / (0.15 + ((timeDiff * timeDiff)/8));
+        NSTimeInterval accel = TRACKPAD_ACCEL_N / (TRACKPAD_ACCEL_T + ((timeDiff * timeDiff)/TRACKPAD_ACCEL_D));
         locDiff.h *= accel;
         locDiff.v *= accel;
         trackpadClick = NO;
