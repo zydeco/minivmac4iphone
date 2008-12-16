@@ -15,7 +15,7 @@
 
 #define PointDistanceSq(a, b) ((((int)a.h-(int)b.h)*((int)a.h-(int)b.h)) + (((int)a.v-(int)b.v)*((int)a.v-(int)b.v)))
 #define CGPointCenter(a, b) CGPointMake((a.x+b.x)/2, (a.y+b.y)/2)
-#define MOUSE_DBLCLICK_TIME     0.7     // seconds, NSTimeInterval
+#define MOUSE_DBLCLICK_TIME     0.55    // seconds, NSTimeInterval
 #define MOUSE_CLICK_DELAY       0.05    // seconds, NSTimeInterval
 #define TRACKPAD_CLICK_DELAY    0.30    // seconds, NSTimeInterval
 #define TRACKPAD_CLICK_TIME     0.30    // if finger is held down for longer, it's not a click
