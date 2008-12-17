@@ -104,16 +104,27 @@
 
 - (UITableCell *)table:(UITable *)table cellForRow:(int)row column:(UITableColumn *)col {
     UISimpleTableCell *cell = [[UISimpleTableCell alloc] init];
+    NSFileManager *fm = [NSFileManager defaultManager];
     
     // get path
     NSString* diskPath = [diskFiles objectAtIndex:row];
     
-    // get size for icon
-    NSDictionary* fileAttrs = [[NSFileManager defaultManager] attributesOfItemAtPath:diskPath error:NULL];
-    NSNumber* fileSize = [fileAttrs valueForKey:NSFileSize];
-    if ([fileSize longLongValue] < 1440*1024+100)
-        [cell setIcon:[UIImage imageNamed:@"DiskListFloppy.png"]];
-    else [cell setIcon:[UIImage imageNamed:@"DiskListHD.png"]];
+    // get icon from file
+    NSString *iconPath = [[diskPath stringByDeletingPathExtension] stringByAppendingPathExtension:@"png"];
+    UIImage *iconImage = nil;
+    if ([fm fileExistsAtPath:iconPath])
+        iconImage = [UIImage imageAtPath:iconPath];
+    
+    // set icon according to size
+    if (iconImage == nil) {
+        NSDictionary* fileAttrs = [fm attributesOfItemAtPath:diskPath error:NULL];
+        NSNumber* fileSize = [fileAttrs valueForKey:NSFileSize];
+        if ([fileSize longLongValue] < 1440*1024+100)
+            iconImage = [UIImage imageNamed:@"DiskListFloppy.png"];
+        else 
+            iconImage = [UIImage imageNamed:@"DiskListHD.png"];
+    }
+    [cell setIcon:iconImage];
     
     // set title
     NSString *diskTitle = [[diskPath lastPathComponent] stringByDeletingPathExtension];
