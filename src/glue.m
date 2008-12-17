@@ -23,6 +23,7 @@
 #import <sys/time.h>
 #import "vMacApp.h"
 #import "DATE2SEC.h"
+#import "mnvm/MYOSGLUE.c"
 
 blnr SpeedStopped = YES;
 NSInteger numInsertedDisks;
@@ -37,6 +38,9 @@ ui5b CurEmulatedTime = 0;
 LOCALVAR ui5b OnTrueTime = 0;
 LOCALVAR ui5b LastTimeSec, NextTimeSec;
 LOCALVAR ui5b LastTimeUsec, NextTimeUsec;
+#ifdef IncludePbufs
+LOCALVAR void *PbufDat[NumPbufs];
+#endif
 
 IMPORTFUNC blnr ScreenFindChanges(si3b TimeAdjust, si4b *top, si4b *left, si4b *bottom, si4b *right);
 
@@ -352,6 +356,86 @@ GLOBALFUNC si4b vSonyGetSize(ui4b Drive_No, ui5b *Sony_Count)
 }
 
 GLOBALFUNC si4b vSonyEject(ui4b Drive_No) {
-    return [_vmacAppSharedInstance ejectDrive:Drive_No];
+    return [_vmacAppSharedInstance ejectDrive:Drive_No]? 0 : -1;
 }
+
+#ifdef IncludeSonyGetName
+GLOBALFUNC si4b vSonyGetName(ui4b Drive_No, ui4b *r)
+{
+    NSString *drvName = [_vmacAppSharedInstance nameOfDrive:Drive_No];
+    OSErr err = -1;
+    ui4b bufNum;
+    NSData *macRomanDrvName;
+    
+    if (drvName) {
+        macRomanDrvName = [drvName dataUsingEncoding:NSMacOSRomanStringEncoding allowLossyConversion:YES];
+        err = PbufNew([macRomanDrvName length], &bufNum);
+        if (err == noErr) {
+            [macRomanDrvName getBytes:PbufDat[bufNum]];
+            *r = bufNum;
+        }
+    }
+    return err;
+}
+#endif
+
+#ifdef IncludeSonyNew
+GLOBALFUNC si4b vSonyEjectDelete(ui4b Drive_No)
+{
+    return [_vmacAppSharedInstance ejectAndDeleteDrive:Drive_No]? 0 : -1;
+}
+#endif
+#if 0
+#pragma mark -
+#pragma mark Parameter Buffers
+#endif
+
+#if IncludePbufs
+GLOBALFUNC si4b PbufNew(ui5b count, ui4b *r)
+{
+    ui4b i;
+    void *p;
+    si4b err = -1;
+    
+    if (FirstFreePbuf(&i)) {
+        p = calloc(1, count);
+        if (p != NULL) {
+            *r = i;
+            PbufDat[i] = p;
+            PbufNewNotify(i, count);
+            
+            err = noErr;
+        }
+    }
+    
+    return err;
+}
+
+GLOBALPROC PbufDispose(ui4b i)
+{
+    free(PbufDat[i]);
+    PbufDisposeNotify(i);
+}
+
+LOCALPROC UnInitPbufs(void)
+{
+    si4b i;
+    
+    for (i = 0; i < NumPbufs; ++i) {
+        if (PbufIsAllocated(i)) {
+            PbufDispose(i);
+        }
+    }
+}
+
+GLOBALPROC PbufTransfer(void *Buffer, ui4b i, ui5b offset, ui5b count, blnr IsWrite)
+{
+    void *p = ((ui3p)PbufDat[i]) + offset;
+    if (IsWrite) {
+        (void) memcpy(p, Buffer, count);
+    } else {
+        (void) memcpy(Buffer, p, count);
+    }
+}
+#endif
 

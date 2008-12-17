@@ -47,7 +47,13 @@ typedef enum Direction {
 - (short)readFromDrive:(short)drive start:(unsigned long)start count:(unsigned long*)count buffer:(void*)buffer;
 - (short)writeToDrive:(short)drive start:(unsigned long)start count:(unsigned long*)count buffer:(void*)buffer;
 - (short)sizeOfDrive:(short)drive count:(unsigned long*)count;
-- (short)ejectDrive:(short)drive;
+- (BOOL)ejectDrive:(short)drive;
+#ifdef IncludeSonyGetName
+- (NSString*)nameOfDrive:(short)drive;
+#endif
+#ifdef IncludeSonyNew
+- (BOOL)ejectAndDeleteDrive:(short)drive;
+#endif
 @property (nonatomic, readonly) NSInteger insertedDisks;
 @end
 

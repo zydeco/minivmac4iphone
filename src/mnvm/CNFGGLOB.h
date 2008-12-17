@@ -8,7 +8,8 @@
 #define NumDrives 8
 #define DetailedAbormalReport 1
 #define WantInitSpeedValue 0
-#define IncludePbufs 0
+#define EnableDragDrop 0
+#define IncludePbufs 1
 #define IncludeSonyRawMode 0
 #define IncludeSonyGetName 0
 #define IncludeSonyNew 0

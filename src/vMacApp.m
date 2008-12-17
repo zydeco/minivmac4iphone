@@ -277,8 +277,8 @@ IMPORTFUNC blnr InitEmulation(void);
     return 0;
 }
 
-- (short)ejectDrive:(short)n {
-    NSFileHandle    *fh = drives[n];
+- (BOOL)ejectDrive:(short)n {
+    NSFileHandle *fh = drives[n];
     drives[n] = nil;
     [drivePath[n] release];
     drivePath[n] = nil;
@@ -292,8 +292,28 @@ IMPORTFUNC blnr InitEmulation(void);
     if ([defaults boolForKey:@"DiskEjectSound"]) AudioServicesPlaySystemSound(ejectSound);
     [[NSNotificationCenter defaultCenter] postNotificationName:@"diskEjected" object:self];
     
-    return 0;
+    return YES;
 }
+
+#ifdef IncludeSonyGetName
+- (NSString*)nameOfDrive:(short)n {
+    if (drivePath[n] == nil) return nil;
+    return [drivePath[n] lastPathComponent];
+}
+#endif
+
+#ifdef IncludeSonyNew
+- (BOOL)ejectAndDeleteDrive:(short)n {
+    BOOL hadDiskEjectSound = [defaults boolForKey:@"DiskEjectSound"];
+    BOOL success = NO;
+    [defaults setBool:NO forKey:@"DiskEjectSound"];
+    NSString * path = [drivePath[n] autorelease];
+    if ([self ejectDrive:n])
+        success = [[NSFileManager defaultManager] removeItemAtPath:path error:NULL];
+    [defaults setBool:hadDiskEjectSound forKey:@"DiskEjectSound"];
+    return success;
+}
+#endif
 
 #if 0
 #pragma mark -
