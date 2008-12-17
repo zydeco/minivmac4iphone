@@ -8,7 +8,6 @@ MNVM = ADDRSPAC.o \
        KBRDEMDV.o \
        MINEM68K.o \
        MOUSEMDV.o \
-       MYOSGLUE.o \
        PROGMAIN.o \
        ROMEMDEV.o \
        RTCEMDEV.o \
@@ -80,6 +79,10 @@ clean:
 
 install: app
 	scp -r build/$(APP) root@$(IPHONE):/Applications
+	ssh $(IPHONE) -l mobile uicache
+
+reinstall: app
+	scp -r build/$(APP)/$(PROD) root@$(IPHONE):/Applications/$(APP)/$(PROD)
 	ssh $(IPHONE) -l mobile uicache
 
 dist: app
