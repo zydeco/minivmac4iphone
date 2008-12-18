@@ -92,6 +92,7 @@ typedef enum Direction {
 + (id)sharedInstance;
 
 - (NSArray*)searchPaths;
+- (NSString*)defaultSearchPath;
 - (void)initPreferences;
 - (void)didChangePreferences:(NSNotification *)aNotification;
 - (void)warnMessage:(NSString *)message title:(NSString *)title;

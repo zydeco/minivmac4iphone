@@ -18,6 +18,7 @@ IMPORTFUNC blnr InitEmulation(void);
     _vmacAppSharedInstance = self;
     
     // initialize stuff
+    NSFileManager * fm = [NSFileManager defaultManager];
     NSBundle * mb = [NSBundle mainBundle];
     openAlerts = [[NSMutableSet setWithCapacity:5] retain];
     searchPaths = [[NSArray arrayWithObjects:
@@ -27,6 +28,10 @@ IMPORTFUNC blnr InitEmulation(void);
                     nil] retain];
     initOk = [self initEmulation];
     AudioServicesCreateSystemSoundID((CFURLRef)[NSURL fileURLWithPath:[mb pathForResource:@"diskEject" ofType:@"aiff"]] ,&ejectSound);
+    
+    // check default search path
+    if (![fm fileExistsAtPath:[self defaultSearchPath]])
+        [fm createDirectoryAtPath:[self defaultSearchPath] attributes:nil];
     
     // initialize defaults
     [self initPreferences];
@@ -67,6 +72,10 @@ IMPORTFUNC blnr InitEmulation(void);
 
 - (NSArray*)searchPaths {
     return searchPaths;
+}
+
+- (NSString*)defaultSearchPath {
+    [NSHomeDirectory() stringByAppendingPathComponent:@"Library/MacOSClassic"];
 }
 
 #if 0
