@@ -10,4 +10,8 @@
 - (void) setStatusBarOrientation:(int)fp8 animated:(BOOL)fp12;
 @end
 
+@interface UIImage (extensions)
++ (id)imageWithData:(id)fp8;
+@end
+
 #endif

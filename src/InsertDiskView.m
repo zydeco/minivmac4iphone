@@ -88,6 +88,9 @@
     NSFileManager* fm = [NSFileManager defaultManager];
     UIImage* iconImage = nil;
     
+    // get icon from xattr
+    iconImage = [UIImage imageWithData:[fm extendedAttribute:@"net.namedfork.DiskImageIcon" atPath:path traverseLink:YES error:NULL]];
+    
     // get icon from file
     if (iconImage == nil) {
         NSString *iconPath = [[path stringByDeletingPathExtension] stringByAppendingPathExtension:@"png"];

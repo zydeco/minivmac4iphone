@@ -20,7 +20,8 @@ MNVM = ADDRSPAC.o \
 OBJS = $(MNVM) main.o glue.o \
        vMacApp.o MainView.o SurfaceView.o \
        SettingsView.o DiskListTable.o InsertDiskView.o \
-       KeyboardView.o KBKey.o
+       KeyboardView.o KBKey.o \
+       ExtendedAttributes.o
 
 CC = arm-apple-darwin9-gcc
 LD = $(CC)
