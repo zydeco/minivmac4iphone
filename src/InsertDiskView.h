@@ -2,6 +2,7 @@
 #import <UIKit/UIKit.h>
 #import <UIKit/UISectionList.h>
 #import "vMacApp.h"
+#import "DiskListTable.h"
 
 #define InsertDiskViewAnimationDuration     0.3
 #define InsertDiskViewFrameHidden           CGRectMake(480.0, 0.0, 240.0, 320.0)
@@ -11,7 +12,7 @@
     id <VirtualDiskDrive>   diskDrive;
     NSArray*                diskFiles;
     
-    UITable*                table;
+    DiskListTable*          table;
     UINavigationBar*        navBar;
 }
 
@@ -22,5 +23,5 @@
 - (void)findDiskFiles;
 - (void)didEjectDisk:(NSNotification *)aNotification;
 - (void)didInsertDisk:(NSNotification *)aNotification;
-
+- (UIImage*)iconForDiskImageAtPath:(NSString *)path;
 @end

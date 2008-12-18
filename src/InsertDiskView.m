@@ -1,5 +1,6 @@
 #import "InsertDiskView.h"
 #import <UIKit/UISimpleTableCell.h>
+#import "ExtendedAttributes.h"
 
 @implementation InsertDiskView
 @synthesize diskDrive;
@@ -10,7 +11,7 @@
         
         // create table
         CGRect tableRect = CGRectMake(0.0, 48.0, rect.size.width, rect.size.height-48.0);
-        table = [[UITable alloc] initWithFrame: tableRect];
+        table = [[DiskListTable alloc] initWithFrame: tableRect];
         UITableColumn* col = [[UITableColumn alloc] initWithTitle:@"Title" identifier:@"title" width:tableRect.size.width];
         [table addTableColumn: col];
         [table setSeparatorStyle: 1];
@@ -83,6 +84,30 @@
     diskFiles = [[NSArray arrayWithArray:myDiskFiles] retain];
 }
 
+- (UIImage*)iconForDiskImageAtPath:(NSString *)path {
+    NSFileManager* fm = [NSFileManager defaultManager];
+    UIImage* iconImage = nil;
+    
+    // get icon from file
+    if (iconImage == nil) {
+        NSString *iconPath = [[path stringByDeletingPathExtension] stringByAppendingPathExtension:@"png"];
+        if ([fm fileExistsAtPath:iconPath])
+            iconImage = [UIImage imageAtPath:iconPath];
+    }
+    
+    // set default icon
+    if (iconImage == nil) {
+        NSDictionary* fileAttrs = [fm attributesOfItemAtPath:path error:NULL];
+        NSNumber* fileSize = [fileAttrs valueForKey:NSFileSize];
+        if ([fileSize longLongValue] < 1440*1024+100)
+            iconImage = [UIImage imageNamed:@"DiskListFloppy.png"];
+        else 
+            iconImage = [UIImage imageNamed:@"DiskListHD.png"];
+    }
+    
+    return iconImage;
+}
+
 #if 0
 #pragma mark -
 #pragma mark Navigation Bar Delegate
@@ -109,22 +134,8 @@
     // get path
     NSString* diskPath = [diskFiles objectAtIndex:row];
     
-    // get icon from file
-    NSString *iconPath = [[diskPath stringByDeletingPathExtension] stringByAppendingPathExtension:@"png"];
-    UIImage *iconImage = nil;
-    if ([fm fileExistsAtPath:iconPath])
-        iconImage = [UIImage imageAtPath:iconPath];
-    
-    // set icon according to size
-    if (iconImage == nil) {
-        NSDictionary* fileAttrs = [fm attributesOfItemAtPath:diskPath error:NULL];
-        NSNumber* fileSize = [fileAttrs valueForKey:NSFileSize];
-        if ([fileSize longLongValue] < 1440*1024+100)
-            iconImage = [UIImage imageNamed:@"DiskListFloppy.png"];
-        else 
-            iconImage = [UIImage imageNamed:@"DiskListHD.png"];
-    }
-    [cell setIcon:iconImage];
+    // set icon
+    [cell setIcon:[self iconForDiskImageAtPath:diskPath]];
     
     // set title
     NSString *diskTitle = [[diskPath lastPathComponent] stringByDeletingPathExtension];
@@ -135,6 +146,24 @@
         [cell setEnabled:NO];
     
     return [cell autorelease];
+}
+
+- (BOOL)table:(UITable *)aTable canDeleteRow:(int)row {
+    NSString * diskPath = [diskFiles objectAtIndex:row];
+    return [[NSFileManager defaultManager] isDeletableFileAtPath:diskPath];
+}
+
+- (void)table:(UITable *)aTable deleteRow:(int)row {
+    NSFileManager * fm = [NSFileManager defaultManager];
+    // delete file
+    NSString * diskPath = [diskFiles objectAtIndex:row];
+    if ([fm removeItemAtPath:diskPath error:NULL]) {
+        // delete icon file
+        NSString * iconPath = [[diskPath stringByDeletingPathExtension] stringByAppendingPathExtension:@"png"];
+        [fm removeItemAtPath:iconPath error:NULL];
+    }
+    
+    [self findDiskFiles];
 }
 
 - (void)tableRowSelected:(NSNotification*)notification {
