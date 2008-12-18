@@ -22,7 +22,7 @@
     ];
     
     // show remove button if it's removable
-    if ([self canDeleteRow:row]) {
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"CanDeleteDiskImages"] && [self canDeleteRow:row]) {
         [[self visibleCellForRow:row column:0]
            _showDeleteOrInsertion: YES
            withDisclosure: NO

@@ -26,6 +26,8 @@
 "SettingsSoundDiskEject" = "Disk Eject";
 "SettingsMouse" = "Mouse";
 "SettingsMouseTrackpadMode" = "Trackpad";
+"SettingsDisk" = "Disk Images";
+"SettingsDiskDelete" = "Deletable";
 
 /* global */
 "OK" = "OK";

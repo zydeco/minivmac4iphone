@@ -101,6 +101,9 @@ IMPORTFUNC blnr InitEmulation(void);
         [defaults setBool:NO forKey:@"TrackpadMode"];
     if ([defaults objectForKey:@"KeyboardSound"] == nil)
         [defaults setBool:YES forKey:@"KeyboardSound"];
+    if ([defaults objectForKey:@"CanDeleteDiskImages"] == nil)
+        [defaults setBool:YES forKey:@"CanDeleteDiskImages"];
+    
     [defaults synchronize];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didChangePreferences:) name:@"preferencesUpdated" object:nil];
 }

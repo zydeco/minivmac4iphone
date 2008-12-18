@@ -26,6 +26,8 @@
 "SettingsSoundDiskEject" = "Expulsar Disco";
 "SettingsMouse" = "Ratón";
 "SettingsMouseTrackpadMode" = "Trackpad";
+"SettingsDisk" = "Imágenes de Disco";
+"SettingsDiskDelete" = "Eliminables";
 
 /* global */
 "OK" = "OK";

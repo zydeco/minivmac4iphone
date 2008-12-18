@@ -1,6 +1,5 @@
 #import "SettingsView.h"
 #import "vMacApp.h"
-#import <UIKit/UIPreferencesControlTableCell.h>
 #import <UIKit/UISliderControl.h>
 #import <UIKit/UISwitchControl.h>
 
@@ -23,6 +22,7 @@ extern NSString *kUIButtonBarButtonType;
         layouts = [[[vMacApp sharedInstance] availableKeyboardLayouts] retain];
         layoutIDs = [[[layouts allKeys] sortedArrayUsingSelector:@selector(caseInsensitiveCompare:)] retain];
         defaults = [NSUserDefaults standardUserDefaults];
+        switches = [[NSMutableDictionary dictionaryWithCapacity:5] retain];
         
         // create nav bar
         navBar = [[UINavigationBar alloc] initWithFrame: CGRectMake(0.0, 0.0, frame.size.width, 48.0)];
@@ -73,6 +73,7 @@ extern NSString *kUIButtonBarButtonType;
     [navBar release];
     [layouts release];
     [layoutIDs release];
+    [switches release];
     [super dealloc];
 }
 
@@ -135,6 +136,8 @@ extern NSString *kUIButtonBarButtonType;
         return 1;
     case settingsGroupSound:
         return 3;
+    case settingsGroupDisk:
+        return 1;
     case settingsGroupVersion:
         return 1;
     }
@@ -153,6 +156,9 @@ extern NSString *kUIButtonBarButtonType;
         case settingsGroupSound:
             [cell setTitle:NSLocalizedString(@"SettingsSound", nil)];
             break;
+        case settingsGroupDisk:
+            [cell setTitle:NSLocalizedString(@"SettingsDisk", nil)];
+            break;
         default:
             cell = nil;
     }
@@ -160,7 +166,6 @@ extern NSString *kUIButtonBarButtonType;
 }
 
 - (UIPreferencesTableCell*)preferencesTable:(UIPreferencesTable*)aTable cellForRow:(int)row inGroup:(int)group {
-    UISwitchControl * swc;
     UISliderControl * slc;
     id cell;
     
@@ -188,47 +193,21 @@ extern NSString *kUIButtonBarButtonType;
             [cell setChecked:[[layoutIDs objectAtIndex:row] isEqualToString:[defaults objectForKey:@"KeyboardLayout"]]];
         }
     } else if (group == settingsGroupMouse) {
-        cell = [[UIPreferencesControlTableCell alloc] init];
-        [cell setTitle:NSLocalizedString(@"SettingsMouseTrackpadMode", nil)];
-        [cell setShowSelection: NO];
-        swc = [[UISwitchControl alloc] init];
-        [swc addTarget:self action:@selector(trackpadModeChanged:) forEvents:4096];
-        [swc setOrigin:CGPointMake(127, 10)];
-        [swc setValue: [defaults boolForKey:@"TrackpadMode"]?1.0f:0.0f];
-        [cell setControl:[swc autorelease]];
+        cell = [self switchCellWithTitle:NSLocalizedString(@"SettingsMouseTrackpadMode", nil) prefsKey:@"TrackpadMode"];
     } else if (group == settingsGroupSound) {
-        if (row == 0) {
+        if (row == 0)
             // mac sound
-            cell = [[UIPreferencesControlTableCell alloc] init];
-            [cell setTitle:NSLocalizedString(@"SettingsSoundEnable", nil)];
-            [cell setShowSelection: NO];
-            swc = [[UISwitchControl alloc] init];
-            [swc addTarget:self action:@selector(soundEnabledChanged:) forEvents:4096];
-            [swc setOrigin:CGPointMake(127, 10)];
-            [swc setValue: [defaults boolForKey:@"SoundEnabled"]?1.0f:0.0f];
-            [cell setControl:[swc autorelease]];
-        } else if (row == 1) {
+            cell = [self switchCellWithTitle:NSLocalizedString(@"SettingsSoundEnable", nil) prefsKey:@"SoundEnabled"];
+        else if (row == 1)
             // disk eject
-            cell = [[UIPreferencesControlTableCell alloc] init];
-            [cell setTitle:NSLocalizedString(@"SettingsSoundDiskEject", nil)];
-            [cell setShowSelection: NO];
-            swc = [[UISwitchControl alloc] init];
-            [swc addTarget:self action:@selector(soundDiskEjectChanged:) forEvents:4096];
-            [swc setOrigin:CGPointMake(127, 10)];
-            [swc setValue: [defaults boolForKey:@"DiskEjectSound"]?1.0f:0.0f];
-            [cell setControl:[swc autorelease]];
-        } else if (row == 2) {
+            cell = [self switchCellWithTitle:NSLocalizedString(@"SettingsSoundDiskEject", nil) prefsKey:@"DiskEjectSound"];
+        else if (row == 2)
             // key sound
-            cell = [[UIPreferencesControlTableCell alloc] init];
-            [cell setTitle:NSLocalizedString(@"SettingsKeyboardSound", nil)];
-            [cell setShowSelection: NO];
-            swc = [[UISwitchControl alloc] init];
-            [swc addTarget:self action:@selector(keyboardSoundChanged:) forEvents:4096];
-            [swc setOrigin:CGPointMake(127, 10)];
-            [swc setValue: [defaults boolForKey:@"KeyboardSound"]?1.0f:0.0f];
-            [cell setControl:[swc autorelease]];
-        }
-        
+            cell = [self switchCellWithTitle:NSLocalizedString(@"SettingsKeyboardSound", nil) prefsKey:@"KeyboardSound"];
+    } else if (group == settingsGroupDisk) {
+        if (row == 0)
+            // disk image deleton
+            cell = [self switchCellWithTitle:NSLocalizedString(@"SettingsDiskDelete", nil) prefsKey:@"CanDeleteDiskImages"];
     } else if (group == settingsGroupVersion) {
         cell = [[UIPreferencesTableCell alloc] init];
         NSString* bundleVersion = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"];
@@ -273,32 +252,30 @@ extern NSString *kUIButtonBarButtonType;
     [self notifyPrefsUpdate];
 }
 
-- (void)soundEnabledChanged:(UIPreferencesControlTableCell*)cell {
-    UISwitchControl* control = [cell control];
-    [defaults setBool:([control value] == 1.0) forKey:@"SoundEnabled"];
-    [defaults synchronize];
-    [self notifyPrefsUpdate];
+- (UIPreferencesControlTableCell*)switchCellWithTitle:(NSString*)title prefsKey:(NSString*)key {
+    UIPreferencesControlTableCell * cell = [[UIPreferencesControlTableCell alloc] init];
+    UISwitchControl * swc = [[UISwitchControl alloc] init];
+    [cell setTitle:title];
+    [cell setShowSelection: NO];
+    [swc addTarget:self action:@selector(switchChanged:) forEvents:4096];
+    [swc setOrigin:CGPointMake(127, 10)];
+    [swc setValue: [defaults boolForKey:key]?1.0f:0.0f];
+    [switches setObject:swc forKey:key];
+    [cell setControl:[swc autorelease]];
+    return cell;
 }
 
-- (void)soundDiskEjectChanged:(UIPreferencesControlTableCell*)cell {
-    UISwitchControl* control = [cell control];
-    [defaults setBool:([control value] == 1.0) forKey:@"DiskEjectSound"];
-    [defaults synchronize];
-    [self notifyPrefsUpdate];
-}
 
-- (void)trackpadModeChanged:(UIPreferencesControlTableCell*)cell {
+- (void)switchChanged:(UIPreferencesControlTableCell*)cell {
     UISwitchControl* control = [cell control];
-    [defaults setBool:([control value] == 1.0) forKey:@"TrackpadMode"];
-    [defaults synchronize];
-    [self notifyPrefsUpdate];
-}
-
-- (void)keyboardSoundChanged:(UIPreferencesControlTableCell*)cell {
-    UISwitchControl* control = [cell control];
-    [defaults setBool:([control value] == 1.0) forKey:@"KeyboardSound"];
-    [defaults synchronize];
-    [self notifyPrefsUpdate];
+    NSArray * switchKeys = [switches allKeys];
+    for(NSString * key in switchKeys) 
+        if ([switches objectForKey:key] == control) {
+            [defaults setBool:([control value] == 1.0) forKey:key];
+            [defaults synchronize];
+            [self notifyPrefsUpdate];
+            return;
+        }
 }
 
 @end
