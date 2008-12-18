@@ -241,6 +241,15 @@ IMPORTFUNC blnr InitEmulation(void);
     return numInsertedDisks;
 }
 
+- (BOOL) canCreateDiskImages {
+    NSLog(@"I can%s create disk images", [[NSFileManager defaultManager] isWritableFileAtPath:self.pathToDiskImages]?"":"'t");
+    return [[NSFileManager defaultManager] isWritableFileAtPath:self.pathToDiskImages];
+}
+
+- (NSString*) pathToDiskImages {
+    return [self defaultSearchPath];
+}
+
 - (BOOL)insertDisk:(NSString*)path {
     BOOL isDir;
     short i, driveNum;

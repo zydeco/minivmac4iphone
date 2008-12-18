@@ -55,6 +55,8 @@ typedef enum Direction {
 - (BOOL)ejectAndDeleteDrive:(short)drive;
 #endif
 @property (nonatomic, readonly) NSInteger insertedDisks;
+@property (nonatomic, readonly) BOOL canCreateDiskImages;
+@property (nonatomic, readonly) NSString * pathToDiskImages;
 @end
 
 @protocol VirtualMouse
@@ -89,7 +91,7 @@ typedef enum Direction {
     ui5b                timeSecBase;
 }
 
-+ (id)sharedInstance;
++ (vMacApp*)sharedInstance;
 
 - (NSArray*)searchPaths;
 - (NSString*)defaultSearchPath;

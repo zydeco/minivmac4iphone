@@ -25,7 +25,7 @@
         [navBar setDelegate:self];
         UINavigationItem *navItem = [[UINavigationItem alloc] initWithTitle:NSLocalizedString(@"InsertDisk", nil)];
         [navBar pushNavigationItem: navItem];
-        [navBar showButtonsWithLeftTitle:nil rightTitle: NSLocalizedString(@"Cancel", nil) leftBack: NO];
+        [navBar showButtonsWithLeftTitle:([vMacApp sharedInstance].canCreateDiskImages?NSLocalizedString(@"NewDiskImage",nil):nil) rightTitle: NSLocalizedString(@"Cancel", nil) leftBack: NO];
         [self addSubview: navBar];
         [navItem autorelease];
         
@@ -117,8 +117,12 @@
 #endif
 
 - (void)navigationBar:(UINavigationBar *)navbar buttonClicked:(int)button {
-    // only one button exists
-    [self hide];
+    if (button == 1) {
+        // new disk image
+    } else if (button == 0) {
+        // close
+        [self hide];
+    }
 }
 
 #if 0
