@@ -18,6 +18,7 @@ IMPORTFUNC blnr InitEmulation(void);
     _vmacAppSharedInstance = self;
     
     // initialize stuff
+    [self setStatusBarOrientation:UIInterfaceOrientationLandscapeRight animated:NO];
     NSFileManager * fm = [NSFileManager defaultManager];
     NSBundle * mb = [NSBundle mainBundle];
     openAlerts = [[NSMutableSet setWithCapacity:5] retain];
@@ -37,7 +38,6 @@ IMPORTFUNC blnr InitEmulation(void);
     [self initPreferences];
     
     // create window
-    [self setStatusBarOrientation:UIInterfaceOrientationLandscapeRight animated:NO];
     window = [[UIWindow alloc] initWithFrame: CGRectMake(0,0,480,320)];
     [window setTransform:CGAffineTransformMake(0, 1, -1, 0, -80, 80)];
     mainView = [[MainView alloc] initWithFrame: CGRectMake(0,0,480,320)];
