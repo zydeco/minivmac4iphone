@@ -72,6 +72,7 @@ app: $(PROD)
 	cp $(PROD) build/$(APP)/
 	sed s/BUNDLE_VERSION/$(VERSION)/ Resources/Info.plist > build/$(APP)/Info.plist
 	plutil -convert binary1 build/$(APP)/*.kbdlayout
+	plutil -convert binary1 build/$(APP)/*.lproj/Localizable.strings
 	rm -rf build/$(APP)/.svn build/$(APP)/*/.svn
 
 clean:
