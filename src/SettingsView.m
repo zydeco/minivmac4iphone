@@ -212,7 +212,7 @@ extern NSString *kUIButtonBarButtonType;
         cell = [[UIPreferencesTableCell alloc] init];
         NSString* bundleVersion = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"];
         NSString* bundleLongName = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleLongName"];
-        [cell setTitle:[NSString stringWithFormat:@"%@ %@\n©2008 namedfork.net", bundleLongName, bundleVersion]];
+        [cell setTitle:[NSString stringWithFormat:@"%@ %@\n©2008-2009 namedfork.net", bundleLongName, bundleVersion]];
     }
     
     return [cell autorelease];

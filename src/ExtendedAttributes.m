@@ -3,7 +3,7 @@
 //  NSFileManager+Xattr
 //
 //  Created by Zydeco on 2008-12-17.
-//  Copyright 2008 namedfork.net. All rights reserved.
+//  Copyright 2008-2009 namedfork.net. All rights reserved.
 //
 
 #import "ExtendedAttributes.h"

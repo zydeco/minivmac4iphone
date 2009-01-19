@@ -1,6 +1,6 @@
 /*
  Mini vMac for iPhone
- Copyright (c) 2008, Jesús A. Álvarez
+ Copyright (c) 2008-2009, Jesús A. Álvarez
 
  This program is free software; you can redistribute it and/or
  modify it under the terms of the GNU General Public License
