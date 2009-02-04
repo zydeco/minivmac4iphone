@@ -44,6 +44,35 @@ NSString * XAResourceFork = @XATTR_RESOURCEFORK_NAME;
     return [NSArray arrayWithArray:names];
 }
 
+- (BOOL)hasExtendedAttribute:(NSString*)name atPath:(NSString*)path traverseLink:(BOOL)follow error:(NSError**)err {
+    int flags = follow? 0 : XATTR_NOFOLLOW;
+    
+    // get size of name list
+    ssize_t nameBuffLen = listxattr([path fileSystemRepresentation], NULL, 0, flags);
+    if (nameBuffLen == -1) {
+        if (err) *err = [NSError errorWithDomain:NSPOSIXErrorDomain code:errno userInfo:
+            [NSDictionary dictionaryWithObjectsAndKeys:
+             [NSString stringWithUTF8String:strerror(errno)], @"error",
+             @"listxattr", @"function",
+             path, @":path",
+             [NSNumber numberWithBool:follow], @":traverseLink",
+             nil]
+            ];
+        return NO;
+    } else if (nameBuffLen == 0) return NO;
+    
+    // get name list
+    NSMutableData *nameBuff = [NSMutableData dataWithLength:nameBuffLen];
+    listxattr([path fileSystemRepresentation], [nameBuff mutableBytes], nameBuffLen, flags);
+    
+    // find our name
+    NSMutableArray * names = [NSMutableArray arrayWithCapacity:5];
+    char *nextName, *endOfNames = [nameBuff mutableBytes] + nameBuffLen;
+    for(nextName = [nameBuff mutableBytes]; nextName < endOfNames; nextName += 1+strlen(nextName))
+        if (strcmp(nextName, [name UTF8String]) == 0) return YES;
+    return NO;
+}
+
 - (NSData*)extendedAttribute:(NSString*)name atPath:(NSString*)path traverseLink:(BOOL)follow error:(NSError**)err {
     int flags = follow? 0 : XATTR_NOFOLLOW;
     // get length

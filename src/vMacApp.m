@@ -1,5 +1,7 @@
 #import "vMacApp.h"
 #import "MainView.h"
+#import <Foundation/NSTask.h>
+#import "ExtendedAttributes.h"
 
 vMacApp* _vmacAppSharedInstance = nil;
 
@@ -47,6 +49,9 @@ IMPORTFUNC blnr InitEmulation(void);
     
     // start emulation
     if (initOk) [self startEmulation:self];
+    
+    // create disk icons
+    [self performSelectorInBackground:@selector(createDiskIcons) withObject:nil];
 }
 
 - (void)dealloc {
@@ -237,16 +242,16 @@ IMPORTFUNC blnr InitEmulation(void);
     return NO;
 }
 
-- (NSInteger) insertedDisks {
+- (NSInteger)insertedDisks {
     return numInsertedDisks;
 }
 
-- (BOOL) canCreateDiskImages {
+- (BOOL)canCreateDiskImages {
     NSLog(@"I can%s create disk images", [[NSFileManager defaultManager] isWritableFileAtPath:self.pathToDiskImages]?"":"'t");
     return [[NSFileManager defaultManager] isWritableFileAtPath:self.pathToDiskImages];
 }
 
-- (NSString*) pathToDiskImages {
+- (NSString*)pathToDiskImages {
     return [self defaultSearchPath];
 }
 
@@ -314,6 +319,66 @@ IMPORTFUNC blnr InitEmulation(void);
     [[NSNotificationCenter defaultCenter] postNotificationName:@"diskEjected" object:self];
     
     return YES;
+}
+
+- (NSArray*)availableDiskImages {
+    NSMutableArray* myDiskFiles = [NSMutableArray arrayWithCapacity:10];
+    NSFileManager* fm = [NSFileManager defaultManager];
+    NSArray* sources = [self searchPaths];
+    NSArray* extensions = [NSArray arrayWithObjects: @"dsk", @"img", @"DSK", @"IMG", nil];
+    
+    for(NSString *srcDir in sources) {
+        NSArray *dirFiles = [[fm contentsOfDirectoryAtPath:srcDir error:NULL] pathsMatchingExtensions:extensions];
+        for(NSString *filename in dirFiles)
+            [myDiskFiles addObject:[srcDir stringByAppendingPathComponent:filename]];
+    }
+    
+    return myDiskFiles;
+}
+
+- (void)createDiskIcons {
+    if ([NSThread isMainThread]) {
+        [self performSelectorInBackground:@selector(createDiskIcons) withObject:nil];
+        return;
+    }
+    
+    NSAutoreleasePool * pool;
+    NSMutableArray * taskArgs;
+    NSArray * diskImages;
+    
+    pool = [NSAutoreleasePool new];
+    
+    // find disks
+    taskArgs = [NSMutableArray arrayWithObject:@"-x:net.namedfork.DiskImageIcon"];
+    diskImages = [self availableDiskImages];
+    for(NSString * diskImage in diskImages)
+        if ([self diskImageHasIcon:diskImage] == NO) [taskArgs addObject:diskImage];
+    
+    // create task
+    NSTask * task = [[NSTask alloc] init];
+    [task setLaunchPath:[[NSBundle mainBundle] pathForAuxiliaryExecutable:@"dskicon"]];
+    [task setArguments:taskArgs];
+    [task launch];
+    [task waitUntilExit];
+    if ([task terminationStatus]) {
+        NSLog(@"Created %d icons", [task terminationStatus]);
+        [[NSNotificationCenter defaultCenter] postNotificationName:@"diskIconUpdate" object:nil];
+    }
+    
+    [task release];
+    [pool release];
+}
+
+- (BOOL)diskImageHasIcon:(NSString*)path {
+    NSFileManager* fm = [NSFileManager defaultManager];
+    
+    // xattr
+    if ([fm hasExtendedAttribute:@"net.namedfork.DiskImageIcon" atPath:path traverseLink:YES error:NULL]) return YES;
+    
+    // file
+    if ([fm fileExistsAtPath:[[path stringByDeletingPathExtension] stringByAppendingPathExtension:@"png"]]) return YES;
+    
+    return NO;
 }
 
 #ifdef IncludeSonyGetName

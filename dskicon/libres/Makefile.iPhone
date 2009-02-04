@@ -1,0 +1,14 @@
+LIB = libres.a
+
+CC = arm-apple-darwin9-gcc
+AR = ar
+CFLAGS = -std=c99 -march=armv6 -mcpu=arm1176jzf-s
+
+all: $(LIB)
+
+$(LIB): libres.c
+	$(CC) -c $(CFLAGS) libres.c
+	$(AR) -ru $(LIB) libres.o
+
+clean:
+	rm -rf $(LIB) libres.o demo

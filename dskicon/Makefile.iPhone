@@ -1,0 +1,53 @@
+PROD=dskicon
+OBJS=main.o DSKIconFactory.o
+
+CC = arm-apple-darwin9-gcc
+LD = $(CC)
+LDID = arm-apple-darwin9-ldid
+MD5 = md5
+IPHONE = iphone
+
+# iPhone flags
+ARCH_CFLAGS = -march=armv6 -mcpu=arm1176jzf-s -DBUILD_IPHONE
+ARCH_LDFLAGS = -framework UIKit -framework CoreGraphics
+
+LDFLAGS = -framework Foundation \
+          -framework CoreFoundation \
+          -F/System/Library/PrivateFrameworks \
+          -lobjc -lmfs -lhfs -lres -lz \
+          -bind_at_load -multiply_defined suppress \
+          -Llibmfs -Llibres -Llibhfs \
+          $(ARCH_LDFLAGS)
+
+
+CFLAGS = -g -Werror -std=c99 -include prefix.h -fomit-frame-pointer -O2 \
+         -I. $(ARCH_CFLAGS)
+
+all: $(PROD)
+	
+$(PROD): $(OBJS) libres-lib libmfs-lib libhfs-lib
+	$(LD) $(CFLAGS) $(LDFLAGS) -o $(PROD) $(OBJS)
+	$(LDID) -S $(PROD)
+
+%.o:	%.m
+	$(CC) -c $(CFLAGS) $< -o $@
+
+%.o:	%.c
+	$(CC) -c $(CFLAGS) $< -o $@
+
+clean:
+	rm -rf $(OBJS) $(PROD)
+
+clean-all: clean
+	make -eC libmfs -f Makefile.iPhone clean
+	make -eC libhfs -f Makefile.iPhone clean
+	make -eC libres -f Makefile.iPhone clean
+
+libmfs-lib:
+	@make -eC libmfs -f Makefile.iPhone
+
+libhfs-lib:
+	@make -eC libhfs -f Makefile.iPhone
+
+libres-lib:
+	@make -eC libres -f Makefile.iPhone

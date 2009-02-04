@@ -21,6 +21,7 @@ typedef enum XAMode {
 
 @interface NSFileManager (ExtendedAttributes)
 - (NSArray*)extendedAttributeNamesAtPath:(NSString*)path traverseLink:(BOOL)follow error:(NSError**)err;
+- (BOOL)hasExtendedAttribute:(NSString*)name atPath:(NSString*)path traverseLink:(BOOL)follow error:(NSError**)err;
 - (NSData*)extendedAttribute:(NSString*)name atPath:(NSString*)path traverseLink:(BOOL)follow error:(NSError**)err;
 // extendedAttributesAtPath dictionary DOES NOT include resource fork, as it can be quite big
 // and resource forks are inherent to the Macintosh, not a mere attribute that can be lost

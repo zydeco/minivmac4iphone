@@ -1,5 +1,6 @@
 #import "InsertDiskView.h"
 #import <UIKit/UISimpleTableCell.h>
+#import <Foundation/NSTask.h>
 #import "ExtendedAttributes.h"
 
 @implementation InsertDiskView
@@ -30,13 +31,18 @@
         [navItem autorelease];
         
         // notification
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didInsertDisk:) name:@"diskInserted" object:nil];
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didEjectDisk:) name:@"diskEjected" object:nil];
+        NSNotificationCenter * nc = [NSNotificationCenter defaultCenter];
+        [nc addObserver:self selector:@selector(didInsertDisk:) name:@"diskInserted" object:nil];
+        [nc addObserver:self selector:@selector(didEjectDisk:) name:@"diskEjected" object:nil];
+        [nc addObserver:table selector:@selector(reloadData) name:@"diskIconUpdate" object:nil];
     }
     return self;
 }
 
 - (void)dealloc {
+    NSNotificationCenter * nc = [NSNotificationCenter defaultCenter];
+    [nc removeObserver:self];
+    [nc removeObserver:table];
     [table release];
     [navBar release];
     [diskFiles release];
@@ -48,6 +54,7 @@
     [UIView setAnimationDuration:InsertDiskViewAnimationDuration];
     self.frame = InsertDiskViewFrameHidden;
     [UIView endAnimations];
+    [NSObject cancelPreviousPerformRequestsWithTarget:[vMacApp sharedInstance] selector:@selector(createDiskIcons) object:nil];
 }
 
 - (void)show {
@@ -58,6 +65,7 @@
     [UIView endAnimations];
     [self findDiskFiles];
     [table reloadData];
+    [[vMacApp sharedInstance] performSelector:@selector(createDiskIcons) withObject:nil afterDelay:2.0];
 }
 
 - (void)didEjectDisk:(NSNotification *)aNotification {
@@ -69,20 +77,14 @@
 }
 
 - (void)findDiskFiles {
-    NSFileManager* fm = [NSFileManager defaultManager];
-    NSArray* sources = [[vMacApp sharedInstance] searchPaths];
-    NSArray* extensions = [NSArray arrayWithObjects: @"dsk", @"img", @"DSK", @"IMG", nil];
-    
-    NSMutableArray* myDiskFiles = [NSMutableArray arrayWithCapacity:10];
-    for(NSString *srcDir in sources) {
-        NSArray *dirFiles = [[fm contentsOfDirectoryAtPath:srcDir error:NULL] pathsMatchingExtensions:extensions];
-        for(NSString *filename in dirFiles)
-            [myDiskFiles addObject:[srcDir stringByAppendingPathComponent: filename]];
-    }
-    
     [diskFiles release];
-    diskFiles = [[NSArray arrayWithArray:myDiskFiles] retain];
+    diskFiles = [[[vMacApp sharedInstance] availableDiskImages] retain];
 }
+
+#if 0
+#pragma mark -
+#pragma mark Disk Icons
+#endif
 
 - (UIImage*)iconForDiskImageAtPath:(NSString *)path {
     NSFileManager* fm = [NSFileManager defaultManager];
