@@ -37,17 +37,22 @@ int main (int argc, char const *argv[])
     int retVal = 0;
     NSAutoreleasePool * pool = [NSAutoreleasePool new];
     NSString * output = [NSString stringWithUTF8String:argv[1]];
+    NSString * xattr = nil;
+    if ([output hasPrefix:@"-x:"]) xattr = [output substringFromIndex:3];
     
     for(int i=2; i < argc; i++) {
         NSString * diskFile = [[NSString alloc] initWithUTF8String:argv[i]];
         NSLog(@"Creating icon for %@", diskFile);
         NSData *iconData = [[DSKIconFactory sharedInstance] iconForDiskImage:diskFile];
         if (iconData) {
-            if ([output hasPrefix:@"-x:"]) {
+            if (xattr) {
                 // write to extended attribute
-                setxattr([diskFile fileSystemRepresentation], [[output substringFromIndex:3] UTF8String], [iconData bytes], [iconData length], 0, 0);
+                setxattr([diskFile fileSystemRepresentation], [xattr UTF8String], [iconData bytes], [iconData length], 0, 0);
             } else [iconData writeToFile:output atomically:NO];
             retVal++;
+        } else if (xattr) {
+            // remove extended attribute
+            removexattr([diskFile fileSystemRepresentation], [xattr UTF8String], 0);
         }
         [diskFile release];
     }
