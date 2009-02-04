@@ -107,7 +107,7 @@ typedef enum Direction {
 - (void)suspendEmulation;
 - (void)resumeEmulation;
 - (NSArray*)availableDiskImages;
-- (void)createDiskIcons;
+- (void)createDiskIcons:(NSNumber*)force;
 - (BOOL)diskImageHasIcon:(NSString*)path;
 @end
 

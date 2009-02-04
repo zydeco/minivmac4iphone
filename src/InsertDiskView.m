@@ -54,7 +54,7 @@
     [UIView setAnimationDuration:InsertDiskViewAnimationDuration];
     self.frame = InsertDiskViewFrameHidden;
     [UIView endAnimations];
-    [NSObject cancelPreviousPerformRequestsWithTarget:[vMacApp sharedInstance] selector:@selector(createDiskIcons) object:nil];
+    [NSObject cancelPreviousPerformRequestsWithTarget:[vMacApp sharedInstance] selector:@selector(createDiskIcons:) object:nil];
 }
 
 - (void)show {
@@ -65,7 +65,7 @@
     [UIView endAnimations];
     [self findDiskFiles];
     [table reloadData];
-    [[vMacApp sharedInstance] performSelector:@selector(createDiskIcons) withObject:nil afterDelay:2.0];
+    [[vMacApp sharedInstance] performSelector:@selector(createDiskIcons:) withObject:nil afterDelay:2.0];
 }
 
 - (void)didEjectDisk:(NSNotification *)aNotification {

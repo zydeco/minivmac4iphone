@@ -51,7 +51,7 @@ IMPORTFUNC blnr InitEmulation(void);
     if (initOk) [self startEmulation:self];
     
     // create disk icons
-    [self performSelectorInBackground:@selector(createDiskIcons) withObject:nil];
+    [self performSelectorInBackground:@selector(createDiskIcons:) withObject:[NSNumber numberWithBool:YES]];
 }
 
 - (void)dealloc {
@@ -336,9 +336,9 @@ IMPORTFUNC blnr InitEmulation(void);
     return myDiskFiles;
 }
 
-- (void)createDiskIcons {
+- (void)createDiskIcons:(NSNumber*)force {
     if ([NSThread isMainThread]) {
-        [self performSelectorInBackground:@selector(createDiskIcons) withObject:nil];
+        [self performSelectorInBackground:@selector(createDiskIcons:) withObject:force];
         return;
     }
     
@@ -351,8 +351,18 @@ IMPORTFUNC blnr InitEmulation(void);
     // find disks
     taskArgs = [NSMutableArray arrayWithObject:@"-x:net.namedfork.DiskImageIcon"];
     diskImages = [self availableDiskImages];
-    for(NSString * diskImage in diskImages)
-        if ([self diskImageHasIcon:diskImage] == NO) [taskArgs addObject:diskImage];
+    
+    // check which disk images need icons
+    if ((force == nil) || ([force boolValue] == NO)) {
+        for(NSString * diskImage in diskImages)
+            if ([self diskImageHasIcon:diskImage] == NO) [taskArgs addObject:diskImage];
+    }
+    
+    // return if no disk images selected
+    if ([taskArgs count] == 1) {
+        [pool release];
+        return;
+    }
     
     // create task
     NSTask * task = [[NSTask alloc] init];
