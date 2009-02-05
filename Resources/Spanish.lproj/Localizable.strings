@@ -33,4 +33,15 @@
 "OK" = "OK";
 "Cancel" = "Cancelar";
 "Close" = "Cerrar";
-"NewDiskImage" = "Nueva";
+
+/* new disk image */
+"NewDiskImageBtn" = "Nueva";
+"NewDiskImageTitle" = "Nueva Imagen";
+"CreateDiskImage" = "Crear";
+"Name:" = "Nombre:";
+"Size:" = "Tamaño:";
+"NotEnoughSpaceMsg" = "No hay espacio suficiente para crear la imagen de disco.";
+"ImageAlreadyExistsMsg" = "Ya existe una imagen de disco con ese nombre.";
+"ImageCreationError" = "Ocurrió un error al crear la imagen de disco.";
+"CreatingDiskImage" = "Creando imagen de disco";
+"CreatingDiskImageWait" = "Espere por favor…";

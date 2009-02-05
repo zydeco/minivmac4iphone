@@ -2,6 +2,8 @@
 #import "MainView.h"
 #import <Foundation/NSTask.h>
 #import "ExtendedAttributes.h"
+#include <sys/param.h>
+#include <sys/mount.h>
 
 vMacApp* _vmacAppSharedInstance = nil;
 
@@ -55,6 +57,7 @@ IMPORTFUNC blnr InitEmulation(void);
 }
 
 - (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
     [window release];
     [openAlerts release];
     [romData release];
@@ -325,7 +328,7 @@ IMPORTFUNC blnr InitEmulation(void);
     NSMutableArray* myDiskFiles = [NSMutableArray arrayWithCapacity:10];
     NSFileManager* fm = [NSFileManager defaultManager];
     NSArray* sources = [self searchPaths];
-    NSArray* extensions = [NSArray arrayWithObjects: @"dsk", @"img", @"DSK", @"IMG", nil];
+    NSArray* extensions = [NSArray arrayWithObjects: @"dsk", @"img", @"DSK", @"IMG", @"image", nil];
     
     for(NSString *srcDir in sources) {
         NSArray *dirFiles = [[fm contentsOfDirectoryAtPath:srcDir error:NULL] pathsMatchingExtensions:extensions];
@@ -389,6 +392,83 @@ IMPORTFUNC blnr InitEmulation(void);
     if ([fm fileExistsAtPath:[[path stringByDeletingPathExtension] stringByAppendingPathExtension:@"png"]]) return YES;
     
     return NO;
+}
+
+- (BOOL)createDiskImage:(NSString*)name size:(int)size {
+    // size is in KiB
+    if (name == nil || [name length] == 0) return NO;
+    if (size < 400) return NO;
+    if (size > 500 * 1024) return NO;
+    
+    // see if we have enough free space
+    uint64_t freeSpace;
+    uint64_t needSpace;
+    struct statfs fss;
+    if (statfs([[self pathToDiskImages] fileSystemRepresentation], &fss)) return NO;
+    freeSpace = fss.f_bavail; // free blocks
+    freeSpace *= fss.f_bsize; // now in bytes
+    freeSpace /= 1024; // now in KiB
+    needSpace = size + (20*1024); // 20 MiB safety margin
+    if (freeSpace < needSpace) {
+        [self warnMessage:NSLocalizedString(@"NotEnoughSpaceMsg", nil)];
+        return NO;
+    }
+    
+    // check filename
+    NSFileManager * fm = [NSFileManager defaultManager];
+    NSString * imagePath = [[[self pathToDiskImages] stringByAppendingPathComponent:name] stringByAppendingPathExtension:@"dsk"];
+    if ([fm fileExistsAtPath:imagePath]) {
+        [self warnMessage:NSLocalizedString(@"ImageAlreadyExistsMsg", nil)];
+        return NO;
+    }
+    
+    // write file
+    FILE * fp = fopen([imagePath fileSystemRepresentation], "w");
+    if (fp == NULL) {
+        [self warnMessage:NSLocalizedString(@"ImageCreationError", nil)];
+        return NO;
+    }
+    newImageFile = fp;
+    newImageSize = size;
+    if (size > 5*1024) {
+        newImageProgress = [[UIModalView alloc] init];
+        [newImageProgress setTitle:NSLocalizedString(@"CreatingDiskImage", nil)];
+        [newImageProgress setBodyText:NSLocalizedString(@"CreatingDiskImageWait", nil)];
+        [newImageProgress popupAlertAnimated:YES];
+        [self performSelectorInBackground:@selector(writeImageThread) withObject:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(writeImageThreadDone:) name:@"diskCreated" object:nil];
+    } else {
+        newImageProgress = nil;
+        [self writeImageThread];
+    }
+    
+    return YES;
+}
+
+- (void)writeImageThread {
+    int wbsize = 1024*100; // write in 100K blocks
+    int wbytes = newImageSize*1024;
+    if (newImageSize > 2048) wbsize = 1024*1024; // write in 1M blocks
+    char * buf = malloc(wbsize);
+    while(wbytes) {
+        if (wbytes < wbsize) wbsize = wbytes;
+        if (fwrite(buf, wbsize, 1, newImageFile) != 1) break;
+        wbytes -= wbsize;
+    }
+    
+    free(buf);
+    fclose(newImageFile);
+    newImageFile = NULL;
+    
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"diskCreated" object:[NSNumber numberWithBool:(wbytes? NO : YES)]];
+}
+
+- (void)writeImageThreadDone:(NSNotification*)notification {
+    BOOL success = [[notification object] boolValue];
+    [newImageProgress dismissAnimated:YES];
+    [newImageProgress release];
+    newImageProgress = nil;
+    if (!success) [self warnMessage:NSLocalizedString(@"ImageCreationError", nil)];
 }
 
 #ifdef IncludeSonyGetName
@@ -464,6 +544,7 @@ IMPORTFUNC blnr InitEmulation(void);
 #pragma mark -
 #pragma mark Emulation
 #endif
+
 - (BOOL)initEmulation {
     // load ROM
     if (![self loadROM]) return NO;

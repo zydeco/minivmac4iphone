@@ -48,6 +48,7 @@ typedef enum Direction {
 - (short)writeToDrive:(short)drive start:(unsigned long)start count:(unsigned long*)count buffer:(void*)buffer;
 - (short)sizeOfDrive:(short)drive count:(unsigned long*)count;
 - (BOOL)ejectDrive:(short)drive;
+- (BOOL)createDiskImage:(NSString*)name size:(int)size;
 #ifdef IncludeSonyGetName
 - (NSString*)nameOfDrive:(short)drive;
 #endif
@@ -89,6 +90,11 @@ typedef enum Direction {
     CFRunLoopTimerRef   tickTimer;
     CFAbsoluteTime      aTimeBase;
     ui5b                timeSecBase;
+    
+    // image creation
+    FILE * newImageFile;
+    int newImageSize;
+    UIModalView * newImageProgress;
 }
 
 + (vMacApp*)sharedInstance;
@@ -109,6 +115,7 @@ typedef enum Direction {
 - (NSArray*)availableDiskImages;
 - (void)createDiskIcons:(NSNumber*)force;
 - (BOOL)diskImageHasIcon:(NSString*)path;
+- (void)writeImageThread;
 @end
 
 

@@ -26,7 +26,7 @@
         [navBar setDelegate:self];
         UINavigationItem *navItem = [[UINavigationItem alloc] initWithTitle:NSLocalizedString(@"InsertDisk", nil)];
         [navBar pushNavigationItem: navItem];
-        [navBar showButtonsWithLeftTitle:([vMacApp sharedInstance].canCreateDiskImages?NSLocalizedString(@"NewDiskImage",nil):nil) rightTitle: NSLocalizedString(@"Cancel", nil) leftBack: NO];
+        [navBar showButtonsWithLeftTitle:([vMacApp sharedInstance].canCreateDiskImages?NSLocalizedString(@"NewDiskImageBtn",nil):nil) rightTitle: NSLocalizedString(@"Cancel", nil) leftBack: NO];
         [self addSubview: navBar];
         [navItem autorelease];
         
@@ -34,6 +34,7 @@
         NSNotificationCenter * nc = [NSNotificationCenter defaultCenter];
         [nc addObserver:self selector:@selector(didInsertDisk:) name:@"diskInserted" object:nil];
         [nc addObserver:self selector:@selector(didEjectDisk:) name:@"diskEjected" object:nil];
+        [nc addObserver:self selector:@selector(didCreateDisk:) name:@"diskCreated" object:nil];
         [nc addObserver:table selector:@selector(reloadData) name:@"diskIconUpdate" object:nil];
     }
     return self;
@@ -46,6 +47,7 @@
     [table release];
     [navBar release];
     [diskFiles release];
+    [newDisk release];
     [super dealloc];
 }
 
@@ -66,6 +68,15 @@
     [self findDiskFiles];
     [table reloadData];
     [[vMacApp sharedInstance] performSelector:@selector(createDiskIcons:) withObject:nil afterDelay:2.0];
+}
+
+- (void)didCreateDisk:(NSNotification *)aNotification {
+    BOOL success = [[aNotification object] boolValue];
+    if (success) {
+        [self findDiskFiles];
+        [table reloadData];
+        [newDisk hide];
+    }
 }
 
 - (void)didEjectDisk:(NSNotification *)aNotification {
@@ -121,6 +132,11 @@
 - (void)navigationBar:(UINavigationBar *)navbar buttonClicked:(int)button {
     if (button == 1) {
         // new disk image
+        if (newDisk == nil) {
+            newDisk = [[NewDiskView alloc] initWithFrame:NewDiskViewFrameHidden];
+            [self.superview addSubview:newDisk];
+        }
+        [newDisk show];
     } else if (button == 0) {
         // close
         [self hide];
@@ -159,6 +175,7 @@
 
 - (BOOL)table:(UITable *)aTable canDeleteRow:(int)row {
     NSString * diskPath = [diskFiles objectAtIndex:row];
+    if ([diskDrive diskIsInserted:diskPath]) return NO;
     return [[NSFileManager defaultManager] isDeletableFileAtPath:diskPath];
 }
 

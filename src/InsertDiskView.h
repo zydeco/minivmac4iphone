@@ -3,6 +3,7 @@
 #import <UIKit/UISectionList.h>
 #import "vMacApp.h"
 #import "DiskListTable.h"
+#import "NewDiskView.h"
 
 #define InsertDiskViewAnimationDuration     0.3
 #define InsertDiskViewFrameHidden           CGRectMake(480.0, 0.0, 240.0, 320.0)
@@ -14,6 +15,7 @@
     
     DiskListTable*          table;
     UINavigationBar*        navBar;
+    NewDiskView*            newDisk;
 }
 
 @property (nonatomic, assign) id <VirtualDiskDrive> diskDrive;

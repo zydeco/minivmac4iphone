@@ -17,10 +17,11 @@ MNVM = ADDRSPAC.o \
        SNDEMDEV.o \
        SONYEMDV.o \
        VIAEMDEV.o
-OBJS = $(MNVM) main.o glue.o \
-       vMacApp.o MainView.o SurfaceView.o \
-       SettingsView.o DiskListTable.o InsertDiskView.o \
-       KeyboardView.o KBKey.o ExtendedAttributes.o
+OBJS = $(MNVM) main.o glue.o vMacApp.o MainView.o \
+       SurfaceView.o SettingsView.o \
+       DiskListTable.o InsertDiskView.o NewDiskView.o \
+       KeyboardView.o KBKey.o ExtendedAttributes.o 
+
 EXTRAS = Resources/dskicon
 
 CC = arm-apple-darwin9-gcc
