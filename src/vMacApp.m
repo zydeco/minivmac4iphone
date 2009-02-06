@@ -435,17 +435,17 @@ IMPORTFUNC blnr InitEmulation(void);
         [newImageProgress setTitle:NSLocalizedString(@"CreatingDiskImage", nil)];
         [newImageProgress setBodyText:NSLocalizedString(@"CreatingDiskImageWait", nil)];
         [newImageProgress popupAlertAnimated:YES];
-        [self performSelectorInBackground:@selector(writeImageThread) withObject:nil];
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(writeImageThreadDone:) name:@"diskCreated" object:nil];
+        [self performSelectorInBackground:@selector(writeDiskImageThread) withObject:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(writeDiskImageThreadDone:) name:@"diskCreated" object:nil];
     } else {
         newImageProgress = nil;
-        [self writeImageThread];
+        [self writeDiskImageThread];
     }
     
     return YES;
 }
 
-- (void)writeImageThread {
+- (void)writeDiskImageThread {
     int wbsize = 1024*100; // write in 100K blocks
     int wbytes = newImageSize*1024;
     if (newImageSize > 2048) wbsize = 1024*1024; // write in 1M blocks
@@ -463,7 +463,7 @@ IMPORTFUNC blnr InitEmulation(void);
     [[NSNotificationCenter defaultCenter] postNotificationName:@"diskCreated" object:[NSNumber numberWithBool:(wbytes? NO : YES)]];
 }
 
-- (void)writeImageThreadDone:(NSNotification*)notification {
+- (void)writeDiskImageThreadDone:(NSNotification*)notification {
     BOOL success = [[notification object] boolValue];
     [newImageProgress dismissAnimated:YES];
     [newImageProgress release];
