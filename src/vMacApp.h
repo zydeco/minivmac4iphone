@@ -91,10 +91,13 @@ typedef enum Direction {
     CFAbsoluteTime      aTimeBase;
     ui5b                timeSecBase;
     
-    // image creation
+    // disk image creation
     FILE * newImageFile;
     int newImageSize;
     UIModalView * newImageProgress;
+    
+    // graphics stuff
+    CGColorSpaceRef rgbColorSpace;
 }
 
 + (vMacApp*)sharedInstance;
@@ -116,6 +119,8 @@ typedef enum Direction {
 - (void)createDiskIcons:(NSNumber*)force;
 - (BOOL)diskImageHasIcon:(NSString*)path;
 - (void)writeDiskImageThread;
+- (UIImage*)screenImage;
+- (BOOL)setSuspendedIcon;
 @end
 
 

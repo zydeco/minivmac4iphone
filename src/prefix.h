@@ -6,12 +6,16 @@
 
 #define UIInterfaceOrientationLandscapeRight 3
 
-@interface UIApplication (extensions)
+@interface UIApplication ()
 - (void) setStatusBarOrientation:(int)fp8 animated:(BOOL)fp12;
 @end
 
-@interface UIImage (extensions)
+@interface UIImage ()
 + (id)imageWithData:(id)fp8;
++ (id)imageWithCGImage:(struct CGImage *)fp8;
+- (CGImageRef)CGImage;
 @end
+
+NSData *UIImagePNGRepresentation(UIImage *image);
 
 #endif

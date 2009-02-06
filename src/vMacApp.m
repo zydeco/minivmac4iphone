@@ -2,6 +2,7 @@
 #import "MainView.h"
 #import <Foundation/NSTask.h>
 #import "ExtendedAttributes.h"
+#import "UIApplication-SBCustomIcon.h"
 #include <sys/param.h>
 #include <sys/mount.h>
 
@@ -33,6 +34,7 @@ IMPORTFUNC blnr InitEmulation(void);
                     nil] retain];
     initOk = [self initEmulation];
     AudioServicesCreateSystemSoundID((CFURLRef)[NSURL fileURLWithPath:[mb pathForResource:@"diskEject" ofType:@"aiff"]] ,&ejectSound);
+    rgbColorSpace = CGColorSpaceCreateDeviceRGB();
     
     // check default search path
     if (![fm fileExistsAtPath:[self defaultSearchPath]])
@@ -63,6 +65,7 @@ IMPORTFUNC blnr InitEmulation(void);
     [romData release];
     [searchPaths release];
     AudioServicesDisposeSystemSoundID(ejectSound);
+    CGColorSpaceRelease(rgbColorSpace);
     [super dealloc];
 }
 
@@ -359,7 +362,8 @@ IMPORTFUNC blnr InitEmulation(void);
     if ((force == nil) || ([force boolValue] == NO)) {
         for(NSString * diskImage in diskImages)
             if ([self diskImageHasIcon:diskImage] == NO) [taskArgs addObject:diskImage];
-    }
+    } else if ([force boolValue] == YES)
+        [taskArgs addObjectsFromArray:diskImages];
     
     // return if no disk images selected
     if ([taskArgs count] == 1) {
@@ -540,6 +544,23 @@ IMPORTFUNC blnr InitEmulation(void);
     return YES;
 }
 
+- (UIImage*)screenImage {
+    CGColorSpaceRef colorSpace;
+    CGDataProviderRef provider;
+    CGImageRef cgImage;
+    static unsigned char colorTable[] = {255, 255, 255, 0, 0, 0, 0};
+    
+    colorSpace = CGColorSpaceCreateIndexed(rgbColorSpace, 1, colorTable);
+    provider = CGDataProviderCreateWithData(NULL, screencomparebuff, vMacScreenNumBytes, NULL);
+    cgImage = CGImageCreate(vMacScreenWidth, vMacScreenHeight, 1, 1, vMacScreenByteWidth, colorSpace, 0, provider, NULL, false, kCGRenderingIntentDefault);
+    CGColorSpaceRelease(colorSpace);
+    CGDataProviderRelease(provider);
+    
+    UIImage * image = [UIImage imageWithCGImage:cgImage];
+    CGImageRelease(cgImage);
+    return image;
+}
+
 #if 0
 #pragma mark -
 #pragma mark Emulation
@@ -622,12 +643,34 @@ IMPORTFUNC blnr InitEmulation(void);
 }
 
 - (void)suspendEmulation {
+    // stop emulation
     #if MySoundEnabled
         MySound_Stop();
     #endif
-    
     SpeedStopped = trueblnr;
     CFRunLoopRemoveTimer(CFRunLoopGetMain(), tickTimer, kCFRunLoopCommonModes);
+    
+    // create suspended icon
+    [self setSuspendedIcon];
+}
+
+- (BOOL)setSuspendedIcon {
+    if (!SBCustomIconAvailable) return NO;
+    UIImage * iconBase = [UIImage imageNamed:@"Icon.png"];
+    
+    // make icon
+    CGContextRef iconCtx = CGBitmapContextCreate(NULL, 57, 57, 8, 4*57, rgbColorSpace, kCGImageAlphaPremultipliedFirst);
+    CGContextSetInterpolationQuality(iconCtx, kCGInterpolationHigh);
+    CGContextDrawImage(iconCtx, CGRectMake(0, 0, 57, 57), [iconBase CGImage]);
+    CGContextDrawImage(iconCtx, CGRectMake(13, 28, 31, 23), [[self screenImage] CGImage]);
+    CGImageRef iconCG = CGBitmapContextCreateImage(iconCtx);
+    
+    // set icon
+    [self setCustomIcon:[UIImage imageWithCGImage:iconCG]];
+    
+    // release the hounds
+    CGContextRelease(iconCtx);
+    CGImageRelease(iconCG);
 }
 
 @end
