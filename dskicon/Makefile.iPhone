@@ -20,7 +20,7 @@ LDFLAGS = -framework Foundation \
           $(ARCH_LDFLAGS)
 
 
-CFLAGS = -g -Werror -std=c99 -include prefix.h -fomit-frame-pointer -O2 \
+CFLAGS = -Werror -std=c99 -include prefix.h -fomit-frame-pointer \
          -I. $(ARCH_CFLAGS)
 
 all: $(PROD)
