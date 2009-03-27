@@ -23,9 +23,10 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <fcntl.h>
+#include <sys/time.h>
 #include <time.h>
 #ifdef USE_LIBRES
-#include <libres/libres.h>
+#include <libres/res.h>
 #define DESKTOP_TYPE RFILE*
 #else
 #define DESKTOP_TYPE void*
@@ -39,14 +40,49 @@
 #define kMFSAlBkLast        1
 #define kMFSAlBkDir         0xFFF
 #define kMFSFolderTrash     -3
-#define kMFSFolderDesktop   -2
+#define kMFSFolderDesktop   -2 // only used for root dir
 #define kMFSFolderTemplate  -1
 #define kMFSFolderRoot      0
 
+extern const char * libmfs_id;
+
+// fork types
 enum {
     kMFSForkData,
     kMFSForkRsrc,
     kMFSForkAppleDouble
+};
+
+// result from mfs_path_info
+enum {
+    kMFSPathError = 0,
+    kMFSPathFile,
+    kMFSPathFolder
+};
+
+// finder flags
+#ifndef __MACTYPES__
+enum {
+   kIsOnDesk            = 0x0001, // system 6 or earlier
+   kColor               = 0x000E,
+   kRequireSwitchLaunch = 0x0020,
+   kIsShared            = 0x0040,
+   kHasNoINITs          = 0x0080,
+   kHasBeenInited       = 0x0100,
+   kHasCustomIcon       = 0x0400, // system 7 and later
+   kLetter              = 0x0200,
+   kChanged             = 0x0200, // old
+   kIsStationery        = 0x0800, // system 7 and later
+   kNameLocked          = 0x1000,
+   kHasBundle           = 0x2000,
+   kIsInvisible         = 0x4000,
+   kIsAlias             = 0x8000 // system 7 and later
+};
+#endif
+
+// flags for mfs_vopen
+enum {
+    MFS_FOLDERS = 1
 };
 
 struct __attribute__ ((__packed__)) MFSMasterDirectoryBlock {
@@ -63,7 +99,7 @@ struct __attribute__ ((__packed__)) MFSMasterDirectoryBlock {
     uint16_t    drAlBlSt;       // first allocation block in block map
     uint32_t    drNxtFNum;      // next unused file number
     uint16_t    drFreeBks;      // number of unused allocation blocks
-    uint8_t     drVN[28];       // volume name (pascal string)
+    uint8_t     drVN[28];       // volume name (pascal string, MacRoman)
 };
 typedef struct MFSMasterDirectoryBlock MFSMasterDirectoryBlock;
 
@@ -71,27 +107,12 @@ typedef struct MFSMasterDirectoryBlock MFSMasterDirectoryBlock;
 struct __attribute__ ((__packed__)) MFSFInfo {
     uint32_t    type;
     uint32_t    creator;
-    struct __attribute__ ((__packed__)) {
-        unsigned int    fIsOnDesk:1;
-        unsigned int    fColor:3;
-        unsigned int    _rsv1:1;
-        unsigned int    fRequiresSwitchLaunch:1;
-        unsigned int    fIsShared:1;
-        unsigned int    fHasNoINITs:1;
-        unsigned int    fHasBeenInited:1;
-        unsigned int    fLetter:1;  // formerly 'changed', actually reserved
-        unsigned int    fHasCustomIcon:1;
-        unsigned int    fIsStationery:1;    // system 7 and later
-        unsigned int    fNameLocked:1;
-        unsigned int    fHasBundle:1;
-        unsigned int    fIsInvisible:1;
-        unsigned int    fIsAlias:1;         // system 7 and later
-    } flags;
+    uint16_t    flags;  // finder flags
     struct __attribute__ ((__packed__)) {
         int16_t v;
         int16_t h;
     } loc;
-    uint16_t    folder;
+    int16_t     folder; // FOBJ resource ID
 };
 typedef struct MFSFInfo MFSFInfo;
 
@@ -106,9 +127,9 @@ struct __attribute__ ((__packed__)) MFSDirectoryRecord {
     uint16_t    flRStBlk;       // first allocation block of resource fork
     uint32_t    flRLgLen;       // logical EOF of resource fork
     uint32_t    flRPyLen;       // physical EOF of resource fork
-    uint32_t    flCrDat;        // date and time of creation
-    uint32_t    flMdDat;        // date and time of last modification
-    uint8_t     flNam[1];       // file name (pascal string)
+    uint32_t    flCrDat;        // date and time of creation, since 1904
+    uint32_t    flMdDat;        // date and time of last modification, since 1904
+    uint8_t     flNam[1];       // file name (pascal string, MacRoman)
     char        flCName[];
 };
 typedef struct MFSDirectoryRecord MFSDirectoryRecord;
@@ -118,6 +139,18 @@ typedef uint16_t* MFSVABM;
 
 typedef uint8_t MFSBlock[kMFSBlockSize];
 
+struct MFSFolder {
+    int16_t     fdID;           // 0 is disk root, -1 is empty folder
+    int16_t     fdParent;       // root has parent -2
+    int16_t     fdSubdirs;      // number of subdirectories
+    uint32_t    fdCrDat;        // date and time of creation, since 1904
+    uint32_t    fdMdDat;        // date and time of last modification, since 1904
+    int16_t     fdFlags;        // finder flags
+    int16_t     fdLocV, fdLocH; // icon position
+    char        fdCNam[65];     // MacRoman C string
+};
+typedef struct MFSFolder MFSFolder;
+
 struct MFSVolume {
     FILE                    *fp;
     size_t                  offset;     // offset to start of volume (for mounting disk images with header)
@@ -126,6 +159,8 @@ struct MFSVolume {
     MFSMasterDirectoryBlock mdb;
     MFSVABM                 vabm;
     MFSDirectoryRecord      **directory;
+    size_t                  numFolders;
+    MFSFolder               *folders;
     DESKTOP_TYPE            desktop;
     char                    name[28];
 };
@@ -155,16 +190,12 @@ typedef struct MFSFork MFSFork;
 #define kAppleDoubleCommentOffset       0x1A0
 
 // open/close volume
-MFSVolume* mfs_vopen (const char *path, size_t offset, int reserved);
+MFSVolume* mfs_vopen (const char *path, size_t offset, int flags);
 int mfs_vclose (MFSVolume* vol);
 
 // convert time
 time_t mfs_time (uint32_t mfsDate);
 struct timespec mfs_timespec (uint32_t mfsDate);
-
-// print structures
-int mfs_printmdb (MFSMasterDirectoryBlock *mdb);
-int mfs_printrecord (MFSDirectoryRecord *rec);
 
 // directory
 MFSDirectoryRecord ** mfs_directory (MFSVolume *vol);
@@ -172,8 +203,14 @@ void mfs_directory_free (MFSDirectoryRecord ** dir);
 MFSDirectoryRecord* mfs_directory_find_name (MFSDirectoryRecord **dir, const char *name);
 char * mfs_comment (MFSVolume *vol, MFSDirectoryRecord *rec);
 
+// folders
+MFSFolder* mfs_folder_find (MFSVolume *vol, int16_t fdID);
+MFSFolder* mfs_folder_find_name (MFSVolume *vol, const char *name);
+int mfs_path_info (MFSVolume *vol, const char *path);
+
 // fork mgmt
 MFSFork* mfs_fkopen (MFSVolume *vol, MFSDirectoryRecord *rec, int mode, int flags);
+MFSFork* mfs_dhopen (MFSVolume *vol, MFSFolder *folder);
 int mfs_fkclose (MFSFork *fk);
 int mfs_fkread_at (MFSFork *fk, size_t size, size_t offset, void *buf);
 

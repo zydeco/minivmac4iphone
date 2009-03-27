@@ -22,10 +22,12 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <string.h>
+#include <strings.h>
 #include <errno.h>
-#include <time.h>
 #include <arpa/inet.h>
 #include "mfs.h"
+
+const char * libmfs_id = "libmfs 1.0.0 (C)2008-2009 namedfork.net";
 
 // printable flags
 #define BINFLG8(x) ((x)&0x80?'1':'0'),((x)&0x40?'1':'0'),((x)&0x20?'1':'0'),((x)&0x10?'1':'0'),((x)&0x08?'1':'0'),((x)&0x04?'1':'0'),((x)&0x02?'1':'0'),((x)&0x01?'1':'0')
@@ -41,10 +43,16 @@ MFSDirectoryRecord* mfs_directory_record (MFSDirectoryRecord *src, size_t size);
 int16_t mfs_comment_id (const char *flCName);
 int16_t mfs_folder_id (MFSDirectoryRecord *rec);
 #ifdef USE_LIBRES
-RFILE * mfs_load_desktop (MFSVolume *vol);
+RFILE * mfs_desktop (MFSVolume *vol);
+#endif
+int mfs_load_folders (MFSVolume *vol);
+int mfs_fneq (const uint8_t *s1, const uint8_t *s2);
+#if defined(LIBMFS_VERBOSE)
+int mfs_printmdb (MFSMasterDirectoryBlock *mdb);
+int mfs_printrecord (MFSDirectoryRecord *rec);
 #endif
 
-MFSVolume* mfs_vopen (const char *path, size_t offset, int write) {
+MFSVolume* mfs_vopen (const char *path, size_t offset, int flags) {
     FILE* fp = fopen(path, "r");
     if (fp == NULL) return NULL;
     MFSVolume* vol = malloc(sizeof(MFSVolume));
@@ -88,9 +96,18 @@ MFSVolume* mfs_vopen (const char *path, size_t offset, int write) {
     // read directory
     vol->directory = mfs_directory(vol);
     
+    // read tree
+    #if defined(USE_LIBRES)
+    if (flags & MFS_FOLDERS) mfs_load_folders(vol);
+    #endif
+    
     return vol;
 error:
+#if defined(_DARWIN_C_SOURCE)
     errno = EFTYPE;
+#else
+    errno = EINVAL;
+#endif
     free(vol);
     return NULL;
 }
@@ -104,20 +121,21 @@ int mfs_vclose (MFSVolume* vol) {
     free(vol->vabm);
     fclose(vol->fp);
 #ifdef USE_LIBRES
-    res_close(vol->desktop);
+    if (vol->desktop) res_close(vol->desktop);
+    if (vol->folders) free(vol->folders);
 #endif
     free(vol);
     return 0;
 }
 
 int mfs_blkread (MFSVolume *vol, size_t numBlocks, size_t offset, void *buf) {
-    if (-1 == fseeko(vol->fp, vol->offset+(kMFSBlockSize*offset), SEEK_SET)) return -1;
+    if (-1 == fseek(vol->fp, vol->offset+(kMFSBlockSize*offset), SEEK_SET)) return -1;
     if (numBlocks != fread(buf, kMFSBlockSize, numBlocks, vol->fp)) return -1;
     return 0;
 }
 
 int mfs_albkread (MFSVolume *vol, size_t numBlocks, uint16_t start, void *buf) {
-    if (-1 == fseeko(vol->fp, (vol->offset)+(vol->alBkOff)+(vol->mdb.drAlBlkSiz*start), SEEK_SET)) return -1;
+    if (-1 == fseek(vol->fp, (vol->offset)+(vol->alBkOff)+(vol->mdb.drAlBlkSiz*start), SEEK_SET)) return -1;
     if (numBlocks != fread(buf, vol->mdb.drAlBlkSiz, numBlocks, vol->fp)) return -1;
     return 0;
 }
@@ -133,6 +151,7 @@ struct timespec mfs_timespec (uint32_t mfsDate) {
     return ts;
 }
 
+#if defined(LIBMFS_VERBOSE)
 int mfs_printmdb (MFSMasterDirectoryBlock *mdb) {
     time_t t;
     printf("MASTER DIRECTORY BLOCK:\n");
@@ -162,7 +181,6 @@ int mfs_printrecord (MFSDirectoryRecord *rec) {
     printf("  name:     %s\n", rec->flCName);
     printf("  flags:    %c%c%c%c%c%c%c%c\n", BINFLG8(rec->flFlags));
     printf("  version:  %d\n", rec->flTyp);
-    // finder flags
     printf("  inode:    %d\n", rec->flFlNum);
     printf("  data.blk: %d\n", rec->flStBlk);
     printf("  data.lgl: %d\n", rec->flLgLen);
@@ -174,7 +192,22 @@ int mfs_printrecord (MFSDirectoryRecord *rec) {
     printf("  created:  %s", asctime(localtime(&t)));
     t = mfs_time(rec->flMdDat);
     printf("  modified: %s", asctime(localtime(&t)));
+    // user words
+    printf("  folder: %d\n", ntohs(rec->flUsrWds.folder));
+    uint16_t fflags = ntohs(rec->flUsrWds.flags);
+    printf("  fflags: %04X\n%s%s%s%s%s%s%s%s%s", fflags,
+        ((fflags & kIsOnDesk)?          "          on desktop\n":""),
+        ((fflags & kSwitchLaunch)?      "          switch launch\n":""),
+        ((fflags & kIsShared)?          "          shared\n":""),
+        ((fflags & kHasNoINITs)?        "          no INITs\n":""),
+        ((fflags & kHasBeenInited)?     "          inited\n":""),
+        ((fflags & kChanged)?           "          changed\n":""),
+        ((fflags & kNameLocked)?        "          name locked\n":""),
+        ((fflags & kHasBundle)?         "          bundle\n":""),
+        ((fflags & kIsInvisible)?       "          invisible\n":"")
+        );
 }
+#endif
 
 MFSVABM mfs_vabm (MFSVolume *vol) {
     // VABM is 12-bit packed and comes after MDB
@@ -275,7 +308,7 @@ MFSDirectoryRecord* mfs_directory_find_name (MFSDirectoryRecord **dir, const cha
     for(int i=0; dir[i]; i++) {
         rec = dir[i];
         if (rec->flNam[0] != namelen) continue;
-        if (strcasecmp(rec->flCName, name) == 0) return rec;
+        if (mfs_fneq((const uint8_t*)rec->flCName, (const uint8_t*)name)) return rec;
     }
     return NULL;
 }
@@ -295,7 +328,7 @@ int16_t mfs_comment_id (const char *flCName) {
     return hash;
 }
 
-// returns newly allocated C-string in MacOSRoman encoding, or NULL if it fails
+// returns newly allocated C-string in MacRoman encoding, or NULL if it fails
 // pass rec as NULL for the disk's comment
 char * mfs_comment (MFSVolume *vol, MFSDirectoryRecord *rec) {
     if (vol == NULL) return NULL;
@@ -303,10 +336,10 @@ char * mfs_comment (MFSVolume *vol, MFSDirectoryRecord *rec) {
     int16_t cmtID = mfs_comment_id(rec? rec->flCName : vol->name);
     unsigned char cmtLen;
     size_t readBytes;
-    res_read(mfs_load_desktop(vol), 'FCMT', cmtID, &cmtLen, 0, 1, &readBytes, NULL);
+    res_read(mfs_desktop(vol), 'FCMT', cmtID, &cmtLen, 0, 1, &readBytes, NULL);
     if (readBytes == 0) return NULL;
     char * comment = malloc((int)cmtLen+1);
-    res_read(mfs_load_desktop(vol), 'FCMT', cmtID, comment, 1, cmtLen, &readBytes, NULL);
+    res_read(mfs_desktop(vol), 'FCMT', cmtID, comment, 1, cmtLen, &readBytes, NULL);
     comment[cmtLen] = '\0';
     return comment;
 #else
@@ -318,7 +351,7 @@ MFSFork* mfs_fkopen (MFSVolume *vol, MFSDirectoryRecord *rec, int mode, int writ
     if (vol == NULL || rec == NULL) {errno = ENOENT; return NULL;}
     int isResourceFork = ((mode == kMFSForkRsrc) || (mode == kMFSForkAppleDouble));
     // cannot open non-existant resource forks
-    // non-existant data forks behave like empty files however
+    // non-existant data forks behave like empty files
     if ((mode == kMFSForkRsrc) && (rec->flRStBlk == 0)) {errno = ENOENT; return NULL;}
     
     uint16_t fkNmBks = (isResourceFork?rec->flRPyLen:rec->flPyLen)/vol->mdb.drAlBlkSiz;
@@ -397,7 +430,7 @@ MFSFork* mfs_fkopen (MFSVolume *vol, MFSDirectoryRecord *rec, int mode, int writ
         // finder comment
 #ifdef USE_LIBRES
         size_t commentLength;
-        if (mfs_load_desktop(vol) && res_read(vol->desktop, 'FCMT', mfs_comment_id(rec->flCName), (void*)as+kAppleDoubleCommentOffset, 0, 256, &commentLength, NULL)) {
+        if (mfs_desktop(vol) && res_read(vol->desktop, 'FCMT', mfs_comment_id(rec->flCName), (void*)as+kAppleDoubleCommentOffset, 0, 256, &commentLength, NULL)) {
             as->entry[e].type = htonl(kAppleDoubleCommentEntry);
             as->entry[e].offset = htonl(kAppleDoubleCommentOffset);
             as->entry[e].length = htonl(commentLength);
@@ -408,6 +441,79 @@ MFSFork* mfs_fkopen (MFSVolume *vol, MFSDirectoryRecord *rec, int mode, int writ
         // number of entries written
         as->numEntries = htons(e);
     }
+    
+    // set signature and open forks
+    vol->openForks++;
+    fk->_fkSgn = kMFSForkSignature;
+    return fk;
+}
+
+MFSFork* mfs_dhopen (MFSVolume *vol, MFSFolder *folder) {
+    // open AppleDouble header for folder
+    if (folder == NULL) return NULL;
+    MFSFork* fk = malloc(sizeof(MFSFork));
+    fk->_fkSgn  = 0;
+    fk->fkVol   = vol;
+    fk->fkDrRec = NULL;
+    fk->fkMode  = kMFSForkAppleDouble;
+    fk->fkLgLen = 0;
+    fk->fkNmBks = 0;
+    fk->fkAppleDouble = NULL;
+    fk->fkOffset = 0;
+    
+    // construct AppleDouble header
+    AppleDouble *as = malloc(kAppleDoubleHeaderLength);
+    fk->fkAppleDouble = as;
+    bzero(as, kAppleDoubleHeaderLength);
+    
+    // header
+    as->magic = htonl(kAppleDoubleMagic);
+    as->version = htonl(kAppleDoubleVersion);
+    memcpy(&as->filesystem, "Macintosh       ", 16);
+    int e = 0;
+    
+    // real name
+    as->entry[e].type = htonl(kAppleDoubleRealNameEntry);
+    as->entry[e].offset = htonl(kAppleDoubleRealNameOffset);
+    as->entry[e].length = htonl(strlen(folder->fdCNam));
+    strcpy((void*)as+kAppleDoubleRealNameOffset, folder->fdCNam);
+    e++;
+    
+    // file info
+    as->entry[e].type = htonl(kAppleDoubleFileInfoEntry);
+    as->entry[e].offset = htonl(kAppleDoubleFileInfoOffset);
+    as->entry[e].length = htonl(kAppleDoubleFileInfoLength);
+    AppleDoubleMacFileInfo *mfi = (void*)as+kAppleDoubleFileInfoOffset;
+    mfi->creationDate = htonl(folder->fdCrDat);
+    mfi->modificationDate = htonl(folder->fdMdDat);
+    mfi->backupDate = htonl(0);
+    mfi->attributes = htonl(0);
+    e++;
+    
+    // finder info
+    MFSFInfo finfo = {0, 0, 0, {0, 0}, 0};
+    finfo.flags = htons(folder->fdFlags);
+    finfo.loc.v = htons(folder->fdLocV);
+    finfo.loc.h = htons(folder->fdLocH);
+    as->entry[e].type = htonl(kAppleDoubleFinderInfoEntry);
+    as->entry[e].offset = htonl(kAppleDoubleFinderInfoOffset);
+    as->entry[e].length = htonl(kAppleDoubleFinderInfoLength);
+    memcpy((void*)as+kAppleDoubleFinderInfoOffset, &finfo, 16);
+    e++;
+    
+    // finder comment
+#ifdef USE_LIBRES
+    size_t commentLength;
+    if (mfs_desktop(vol) && res_read(vol->desktop, 'FCMT', mfs_comment_id(folder->fdCNam), (void*)as+kAppleDoubleCommentOffset, 0, 256, &commentLength, NULL)) {
+        as->entry[e].type = htonl(kAppleDoubleCommentEntry);
+        as->entry[e].offset = htonl(kAppleDoubleCommentOffset);
+        as->entry[e].length = htonl(commentLength);
+        e++;
+    }
+#endif
+    
+    // number of entries written
+    as->numEntries = htons(e);
     
     // set signature and open forks
     vol->openForks++;
@@ -527,7 +633,7 @@ int mfs_fkread_at_real (MFSFork *fk, size_t size, size_t offset, void *buf) {
 }
 
 #ifdef USE_LIBRES
-RFILE * mfs_load_desktop (MFSVolume *vol) {
+RFILE * mfs_desktop (MFSVolume *vol) {
     if (vol->desktop == NULL) {
         MFSDirectoryRecord *dr = mfs_directory_find_name(vol->directory, "Desktop");
         MFSFork *df = mfs_fkopen(vol, dr, kMFSForkRsrc, 0);
@@ -538,4 +644,148 @@ RFILE * mfs_load_desktop (MFSVolume *vol) {
     }
     return vol->desktop;
 }
+
+int mfs_load_folders (MFSVolume *vol) {
+    size_t  count;
+    int     i;
+    
+    if (vol->desktop == NULL) vol->desktop = mfs_desktop(vol);
+    if (vol->desktop == NULL) return 0;
+    ResAttr * fobj = res_list(vol->desktop, 'FOBJ', NULL, 0, 0, &count, NULL);
+    if (fobj == NULL) return 0;
+    vol->folders = calloc(count, sizeof(struct MFSFolder));
+    vol->numFolders = count;
+    
+    // fill
+    for(i=0; i < count; i++) {
+        vol->folders[i].fdID = fobj[i].ID;
+        strncpy(vol->folders[i].fdCNam, fobj[i].name, 65); // stupid linux has no strlcpy
+        vol->folders[i].fdCNam[64] = '\0';
+        res_read(vol->desktop, 'FOBJ', fobj[i].ID, &(vol->folders[i].fdParent), 0x0C, 2, NULL, NULL);
+        vol->folders[i].fdParent = ntohs(vol->folders[i].fdParent);
+        
+        res_read(vol->desktop, 'FOBJ', fobj[i].ID, &(vol->folders[i].fdCrDat), 0x1A, 4, NULL, NULL);
+        vol->folders[i].fdCrDat = ntohl(vol->folders[i].fdCrDat);
+        
+        res_read(vol->desktop, 'FOBJ', fobj[i].ID, &(vol->folders[i].fdMdDat), 0x1E, 4, NULL, NULL);
+        vol->folders[i].fdMdDat = ntohl(vol->folders[i].fdMdDat);
+        
+        res_read(vol->desktop, 'FOBJ', fobj[i].ID, &(vol->folders[i].fdFlags), 0x26, 2, NULL, NULL);
+        vol->folders[i].fdFlags = ntohs(vol->folders[i].fdFlags);
+        
+        res_read(vol->desktop, 'FOBJ', fobj[i].ID, &(vol->folders[i].fdLocV), 0x02, 2, NULL, NULL);
+        vol->folders[i].fdLocV = ntohs(vol->folders[i].fdLocV);
+        res_read(vol->desktop, 'FOBJ', fobj[i].ID, &(vol->folders[i].fdLocH), 0x04, 2, NULL, NULL);
+        vol->folders[i].fdLocH = ntohs(vol->folders[i].fdLocH);
+
+        vol->folders[i].fdSubdirs = 0;
+    }
+    
+    // set # of subdirs in each
+    for(i=0; i < count; i++) {
+        MFSFolder *parent = mfs_folder_find(vol, vol->folders[i].fdParent);
+        if (parent == NULL) continue;
+        ++parent->fdSubdirs;
+    }
+    
+    // print folders
+    #if defined(LIBMFS_VERBOSE)
+    printf("FOLDERS:\n#      PAR#   SUB NAME\n");
+    for(i=0; i < count; i++)
+        printf("%-7hd%-7hd%-4hd%s\n", vol->folders[i].fdID, vol->folders[i].fdParent, 
+                vol->folders[i].fdSubdirs, vol->folders[i].fdCNam);
+    #endif
+    
+    free(fobj);
+    return count;
+}
 #endif
+
+MFSFolder* mfs_folder_find (MFSVolume *vol, int16_t fdID) {
+    if (fdID == -2) return NULL;
+    if (vol->folders == NULL) return NULL;
+    for(int i=0; i < vol->numFolders; i++)
+        if (vol->folders[i].fdID == fdID) return &vol->folders[i];
+    return NULL;
+}
+
+MFSFolder* mfs_folder_find_name (MFSVolume *vol, const char *name) {
+    if (vol->folders == NULL) return NULL;
+    for(int i=0; i < vol->numFolders; i++)
+        if (mfs_fneq((const uint8_t*)name, (const uint8_t*)vol->folders[i].fdCNam)) return &vol->folders[i];
+    return NULL;
+}
+
+int mfs_path_info (MFSVolume *vol, const char *path) {
+    if (*path == ':') ++path;
+    if (*path == '\0') return kMFSPathFolder;
+    const char *last = strrchr(path, ':');
+    if (last == NULL) last=path; else ++last;
+    MFSDirectoryRecord *rec;
+    
+    // check if last item exists
+    rec = mfs_directory_find_name(vol->directory, last);
+    if (vol->folders == NULL) return rec?kMFSPathFile:kMFSPathError;
+    if ((mfs_folder_find_name(vol, last) == NULL) && (rec == NULL))
+        return kMFSPathError;
+    
+    // check every item
+    char *pathsep = strdup(path);
+    char *item, *next;
+    MFSFolder *parent = mfs_folder_find(vol, kMFSFolderRoot);
+    MFSFolder *folder;
+    last = strrchr(pathsep, ':');
+    if (last == NULL) last=pathsep; else ++last;
+    item = next = pathsep;
+    for(;;) {
+        item = strsep(&next, ":");
+        if (item == last) {
+            folder = mfs_folder_find_name(vol, item);
+            if (rec && ntohs(rec->flUsrWds.folder) != parent->fdID)
+                // file wasn't inside parent folder
+                goto fail;
+            else if ((rec == NULL) && folder && (folder->fdParent != parent->fdID))
+                // folder wasn't inside parent folder
+                goto fail;
+            break;
+        }
+        
+        // check that the folder exists, and it's inside it's parent
+        folder = mfs_folder_find_name(vol, item);
+        if ((folder == NULL) || (folder->fdParent != parent->fdID)) goto fail;
+        parent = folder;
+    }
+    
+    free(pathsep);
+    if (rec) return kMFSPathFile;
+    return kMFSPathFolder;
+fail:
+    free(pathsep);
+    return kMFSPathError;
+}
+
+int mfs_fneq (const uint8_t *s1, const uint8_t *s2) {
+    // return 1 if MFS filenames are equal, 0 otherwise
+    static const uint8_t mfs_chars_toupper[256] = {
+        // array of MacRoman uppercase equivalents, taken from system 6
+        0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F,
+        0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F,
+        0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x2A, 0x2B, 0x2C, 0x2D, 0x2E, 0x2F,
+        0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3A, 0x3B, 0x3C, 0x3D, 0x3E, 0x3F,
+        0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49, 0x4A, 0x4B, 0x4C, 0x4D, 0x4E, 0x4F,
+        0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57, 0x58, 0x59, 0x5A, 0x5B, 0x5C, 0x5D, 0x5E, 0x5F,
+        0x60, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49, 0x4A, 0x4B, 0x4C, 0x4D, 0x4E, 0x4F,
+        0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57, 0x58, 0x59, 0x5A, 0x7B, 0x7C, 0x7D, 0x7E, 0x7F,
+        0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87, 0xCB, 0x89, 0x80, 0xCC, 0x81, 0x82, 0x83, 0x8F,
+        0x90, 0x91, 0x92, 0x93, 0x94, 0x95, 0x84, 0x97, 0x98, 0x99, 0x85, 0xCD, 0x9C, 0x9D, 0x9E, 0x86,
+        0xA0, 0xA1, 0xA2, 0xA3, 0xA4, 0xA5, 0xA6, 0xA7, 0xA8, 0xA9, 0xAA, 0xAB, 0xAC, 0xAD, 0xAE, 0xAF,
+        0xB0, 0xB1, 0xB2, 0xB3, 0xB4, 0xB5, 0xB6, 0xB7, 0xB8, 0xB9, 0xBA, 0xBB, 0xBC, 0xBD, 0xAE, 0xAF,
+        0xC0, 0xC1, 0xC2, 0xC3, 0xC4, 0xC5, 0xC6, 0xC7, 0xC8, 0xC9, 0xCA, 0xCB, 0xCC, 0xCD, 0xCE, 0xCF,
+        0xD0, 0xD1, 0xD2, 0xD3, 0xD4, 0xD5, 0xD6, 0xD7, 0xD8, 0xD9, 0xDA, 0xDB, 0xDC, 0xDD, 0xDE, 0xDF,
+        0xE0, 0xE1, 0xE2, 0xE3, 0xE4, 0xE5, 0xE6, 0xE7, 0xE8, 0xE9, 0xEA, 0xEB, 0xEC, 0xED, 0xEE, 0xEF,
+        0xF0, 0xF1, 0xF2, 0xF3, 0xF4, 0xF5, 0xF6, 0xF7, 0xF8, 0xF9, 0xFA, 0xFB, 0xFC, 0xFD, 0xFE, 0xFF
+    };
+    while (mfs_chars_toupper[*s1] == mfs_chars_toupper[*s2++])
+        if (*s1++ == 0) return 1;
+    return 0;
+}

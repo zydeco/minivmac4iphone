@@ -25,6 +25,8 @@
 
 #define TYPECHARS(t) ((t) >> 24) & 0xFF, ((t) >> 16) & 0xFF, ((t) >> 8) & 0xFF, (t) & 0xFF
 
+extern const char * libres_id;
+
 // in-memory structures
 typedef struct RFILE RFILE;
 
@@ -47,7 +49,7 @@ struct ResAttr {
     int16_t     ID;
     RFlags      flags;
     uint32_t    size;
-    const char* name; // owned by file
+    const char* name; // owned by file, MacRoman
 };
 typedef struct ResAttr ResAttr;
 

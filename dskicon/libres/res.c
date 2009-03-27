@@ -16,16 +16,18 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-
 // http://developer.apple.com/documentation/mac/MoreToolbox/MoreToolbox-99.html
 
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 #include <search.h>
 #include <arpa/inet.h>
 #include "res.h"
-#include "libres.h"
+#include "libres_internal.h"
+
+const char * libres_id = "libres 1.0.0 (C)2008-2009 namedfork.net";
 
 RFILE* res_open (const char *path, int mode) {
     if (mode != 0) efail(EINVAL);
@@ -46,6 +48,7 @@ RFILE* res_open (const char *path, int mode) {
     rp->size = ftell(rp->fp);
     if (errno) effail(errno, rp);
     
+    rp->buf = NULL;
     return res_load(rp);
 }
 
@@ -54,7 +57,6 @@ RFILE* res_open_mem (void *buf, size_t size, int copy) {
     if (rp == NULL) efail(ENOMEM);
     bzero(rp, sizeof(RFILE));
     rp->size = size;
-    
     if (copy) {
         rp->buf = malloc(size);
         if (rp == NULL) effail(ENOMEM, rp);
@@ -180,6 +182,17 @@ void* res_read_named (RFILE *rp, uint32_t type, const char *name, void *buf, siz
     return res_read(rp, type, ref->ID, buf, start, size, read, remain);
 }
 
+void* res_read_ind (RFILE *rp, uint32_t type, int16_t ind, void *buf, size_t start, size_t size, size_t *read, size_t *remain) {
+    struct RmType *t = res_type_find(rp, type);
+    if (t == NULL) efail(ENOENT);
+    if (ind >= t->count || ind < 0) efail(ENOENT);
+    struct RmResRef *ref = &t->list[ind];
+    if (ref == NULL) efail(ENOENT);
+    
+    if (ref->flags.fl.compressed) efail(ENOSYS);
+    return res_read_raw(rp, ref, buf, start, size, read, remain);
+}
+
 void res_printdir (RFILE *rp) {
     for(int i=0; i < rp->numTypes; i++) {
         struct RmType *t = &rp->types[i];
@@ -235,7 +248,7 @@ void* res_bread (RFILE *rp, void *buf, size_t offset, size_t count) {
 
 uint32_t res_szread (RFILE *rp, size_t offset) {
     uint32_t r = 0;
-    res_bread(rp, &r, offset, 4);
+    res_bread(rp, &r, offset, sizeof r);
     return ntohl(r);
 }
 
