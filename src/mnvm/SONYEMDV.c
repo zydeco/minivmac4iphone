@@ -274,7 +274,7 @@ LOCALFUNC si4b CheckWriteableDrive(ui4b Drive_No)
 	return result;
 }
 
-#define checksumblocksize 64*1024
+#define checksumblocksize 1024
 
 LOCALPROC DC42_Write_Checksum(ui4b Drive_No)
 {
