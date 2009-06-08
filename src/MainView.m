@@ -8,6 +8,7 @@
         NSUserDefaults * defaults = [NSUserDefaults standardUserDefaults];
         [self setBackgroundColor:[UIColor blackColor]];
         [self didChangePreferences:nil];
+        [self setMultipleTouchEnabled:YES];
         
         // add screen view
         CGRect screenRect;
@@ -22,24 +23,13 @@
         screenPosition = [defaults integerForKey:@"ScreenPosition"];
         [self scrollScreenViewTo:screenPosition];
         
-        // add keyboard view
-        keyboardView = [[KeyboardView alloc] initWithFrame:KeyboardViewFrameHidden];
-        keyboardView.searchPaths = [[vMacApp sharedInstance] searchPaths];
-        keyboardView.layout = [defaults objectForKey:@"KeyboardLayout"];
-        [self addSubview:keyboardView];
-        keyboardView.delegate = [vMacApp sharedInstance];
-        
-        // add insert disk view
-        insertDiskView = [[InsertDiskView alloc] initWithFrame:InsertDiskViewFrameHidden];
-        [self addSubview:insertDiskView];
-        insertDiskView.diskDrive = [vMacApp sharedInstance];
-        
-        // add settings view
-        settingsView = [[SettingsView alloc] initWithFrame:SettingsViewFrameHidden];
-        [self addSubview:settingsView];
+        // other views
+        keyboardView = nil;
+        insertDiskView = nil;
+        settingsView = nil;
         
         // register for notifications
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didChangePreferences:) name:@"preferencesUpdated" object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didChangePreferences:) name:NSUserDefaultsDidChangeNotification object:nil];
     }
     return self;
 }
@@ -53,15 +43,60 @@
     trackpadMode = [defaults boolForKey:@"TrackpadMode"];
 }
 
+- (void)_createKeyboardView {
+    if (keyboardView) return;
+    NSUserDefaults * defaults = [NSUserDefaults standardUserDefaults];
+    keyboardView = [[KeyboardView alloc] initWithFrame:KeyboardViewFrameHidden];
+    keyboardView.searchPaths = [[vMacApp sharedInstance] searchPaths];
+    keyboardView.layout = [defaults objectForKey:@"KeyboardLayout"];
+    [self addSubview:keyboardView];
+    keyboardView.delegate = [vMacApp sharedInstance];
+}
+
+- (void)_createInsertDiskView {
+    // add insert disk view
+    insertDiskView = [[InsertDiskView alloc] initWithFrame:InsertDiskViewFrameHidden];
+    [self addSubview:insertDiskView];
+    insertDiskView.diskDrive = [vMacApp sharedInstance];
+}
+
+- (void)_createSettingsView {
+    // add settings view
+    settingsView = [[SettingsView alloc] initWithFrame:SettingsViewFrameHidden];
+    [self addSubview:settingsView];
+}
+
 #if 0
 #pragma mark -
-#pragma mark Mouse
+#pragma mark Touches
 #endif
 
-- (void)mouseDown:(GSEventRef)event {
+- (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event {
+    if ([[event allTouches] count] > 1) {
+        // gesture started
+        mouseTouch = nil;
+        if (inGesture) return;
+        inGesture = YES;
+        mouseDrag = NO;
+        if (trackpadMode) {
+            trackpadClick = NO;
+        } else {
+            [vMacApp cancelPreviousPerformRequestsWithTarget:_vmacAppSharedInstance selector:@selector(setMouseButtonDown) object:nil];
+        }
+        [_vmacAppSharedInstance setMouseButtonUp];
+        
+        // start point
+        gestureStart = CGPointCenter(
+            [[[event.allTouches allObjects] objectAtIndex:0] locationInView:self],
+            [[[event.allTouches allObjects] objectAtIndex:1] locationInView:self]);
+        return;
+    }
+    
+    // mouse tap
+    mouseTouch = [touches anyObject];
+    CGPoint tapLoc = [mouseTouch locationInView:self];
     if (!screenSizeToFit) {
         // check to scroll screen
-        CGPoint tapLoc = GSEventGetLocationInWindow(event).origin;
         CGPoint screenLoc = [screenView frame].origin;
         Direction scrollTo = 0;
         if (tapLoc.x < kScreenEdgeSize && screenLoc.x != 0.0) scrollTo |= dirLeft;
@@ -74,8 +109,8 @@
         }
     }
     
-    Point loc = [self mouseLocForEvent:event];
-    NSTimeInterval mouseTime = GSEventGetTimestamp(event);
+    Point loc = [self mouseLocForCGPoint:tapLoc];
+    NSTimeInterval mouseTime = event.timestamp;
     NSTimeInterval mouseDiff = mouseTime - lastMouseClick;
     
     if (trackpadMode) {
@@ -97,12 +132,31 @@
     
     lastMouseLoc = loc;
     lastMouseTime = lastMouseClick = mouseTime;
-    [super mouseDown:event];
 }
 
-- (void)mouseUp:(GSEventRef)event {
-    Point loc = [self mouseLocForEvent:event];
-    NSTimeInterval mouseTime = GSEventGetTimestamp(event);
+- (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event {
+    if ((mouseTouch == nil) || (![touches containsObject:mouseTouch])) {
+        // end gesture?
+        if (!inGesture) return;
+        inGesture = NO;
+        CGPoint gestureEnd = [touches.anyObject locationInView:self];
+        
+        // process gesture (relative to landscape orientation)
+        Direction swipeDirection = 0;
+        CGPoint delta = CGPointMake(gestureStart.x-gestureEnd.x, gestureStart.y-gestureEnd.y);
+        if (delta.x > kSwipeThresholdHorizontal)  swipeDirection |= dirLeft;
+        if (delta.x < -kSwipeThresholdHorizontal) swipeDirection |= dirRight;
+        if (delta.y > kSwipeThresholdVertical)    swipeDirection |= dirUp;
+        if (delta.y < -kSwipeThresholdVertical)   swipeDirection |= dirDown;
+
+        if (swipeDirection) [self twoFingerSwipeGesture:swipeDirection];
+        else [self twoFingerTapGesture:event];
+        
+        return;
+    }
+    
+    Point loc = [self mouseLocForCGPoint:[mouseTouch locationInView:self]];
+    NSTimeInterval mouseTime = event.timestamp;
     NSTimeInterval mouseDiff = mouseTime - lastMouseClick;
     
     if (trackpadMode) {
@@ -121,12 +175,14 @@
     }
     
     lastMouseLoc = loc;
-    [super mouseUp:event];
 }
 
-- (void)mouseDragged:(GSEventRef)event {
-    NSTimeInterval mouseTime = GSEventGetTimestamp(event);
-    Point loc = [self mouseLocForEvent:event];
+- (void)touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event {
+    if (inGesture) return;
+    if ((mouseTouch == nil) || (![touches containsObject:mouseTouch])) return;
+    
+    NSTimeInterval mouseTime = event.timestamp;
+    Point loc = [self mouseLocForCGPoint:[mouseTouch locationInView:self]];
     
     if (trackpadMode) {
         Point locDiff = loc;
@@ -154,24 +210,27 @@
     
     lastMouseTime = mouseTime;
     lastMouseLoc = loc;
-    [super mouseDragged:event];
 }
 
-- (Point)mouseLocForEvent:(GSEventRef)event {
-    CGRect r = GSEventGetLocationInWindow(event);
+#if 0
+#pragma mark -
+#pragma mark Mouse
+#endif
+
+- (Point)mouseLocForCGPoint:(CGPoint)point {
     Point pt;
     if (trackpadMode) {
         // same location
-        pt.h = r.origin.x;
-        pt.v = r.origin.y;
+        pt.h = point.x;
+        pt.v = point.y;
     } else if (screenSizeToFit) {
         // scale
-        pt.h = r.origin.x * (vMacScreenWidth / 480.0);
-        pt.v = r.origin.y * (vMacScreenHeight / 320.0);
+        pt.h = point.x * (vMacScreenWidth / 480.0);
+        pt.v = point.y * (vMacScreenHeight / 320.0);
     } else {
         // translate
-        pt.h = r.origin.x - mouseOffset.h;
-        pt.v = r.origin.y - mouseOffset.v;
+        pt.h = point.x - mouseOffset.h;
+        pt.v = point.y - mouseOffset.v;
     }
     return pt;
 }
@@ -248,53 +307,30 @@
 #pragma mark Gestures
 #endif
 
-- (BOOL)canHandleGestures
-{
-    return YES;
-}
-
-- (void)gestureStarted:(GSEventRef)event {
-    mouseDrag = NO;
-    if (trackpadMode) {
-        trackpadClick = NO;
-    } else {
-        [vMacApp cancelPreviousPerformRequestsWithTarget:_vmacAppSharedInstance selector:@selector(setMouseButtonDown) object:nil];
-    }
-    [_vmacAppSharedInstance setMouseButtonUp];
-    
-    // start gesture
-    gestureStart = CGPointCenter(GSEventGetInnerMostPathPosition(event),
-        GSEventGetOuterMostPathPosition(event));
-}
-
-- (void)gestureEnded:(GSEventRef)event {
-    CGPoint gestureEnd = CGPointCenter(GSEventGetInnerMostPathPosition(event),
-        GSEventGetOuterMostPathPosition(event));
-    
-    // process gesture (relative to landscape orientation)
-    Direction swipeDirection = 0;
-    CGPoint delta = CGPointMake(gestureStart.x-gestureEnd.x, gestureStart.y-gestureEnd.y);
-    if (delta.x > kSwipeThresholdHorizontal)  swipeDirection |= dirLeft;
-    if (delta.x < -kSwipeThresholdHorizontal) swipeDirection |= dirRight;
-    if (delta.y > kSwipeThresholdVertical)    swipeDirection |= dirUp;
-    if (delta.y < -kSwipeThresholdVertical)   swipeDirection |= dirDown;
-    
-    if (swipeDirection) [self twoFingerSwipeGesture:swipeDirection];
-    else [self twoFingerTapGesture:event];
-}
-
 - (void)twoFingerSwipeGesture:(Direction)direction {
-    if (direction == dirDown)
-        [keyboardView hide];
-    else if (direction == dirUp)
+    switch(direction) {
+    case dirDown:
+        if (keyboardView) [keyboardView hide];
+        break;
+    case dirUp:
+        if (keyboardView == nil) [self _createKeyboardView];
         [keyboardView show];
-    else if (direction == dirLeft)
+        [self bringSubviewToFront:keyboardView];
+        break;
+    case dirLeft:
+        if (insertDiskView == nil) [self _createInsertDiskView];
         [insertDiskView show];
-    else if (direction == dirRight)
+        [self bringSubviewToFront:insertDiskView];
+        break;
+    case dirRight:
+        if (settingsView == nil) [self _createSettingsView];
         [settingsView show];
+        [self bringSubviewToFront:settingsView];
+        break;
+    }
 }
 
-- (void)twoFingerTapGesture:(GSEventRef)event {
+- (void)twoFingerTapGesture:(UIEvent *)event {
     [self toggleScreenSize];
 }
 

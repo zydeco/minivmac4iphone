@@ -13,7 +13,7 @@
     id <VirtualDiskDrive>   diskDrive;
     NSArray*                diskFiles;
     
-    DiskListTable*          table;
+    UITableView*            table;
     UINavigationBar*        navBar;
     NewDiskView*            newDisk;
 }

@@ -35,7 +35,6 @@
 "Close" = "סגור";
 
 /* new disk image */
-"NewDiskImageBtn" = "חדש";
 "NewDiskImageTitle" = "דיסק חדש";
 "CreateDiskImage" = "צור";
 "Name:" = "שם:";

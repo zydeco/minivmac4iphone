@@ -25,7 +25,6 @@ int main(int argc, char *argv[])
 {
     int returnCode;
     NSAutoreleasePool * pool = [[NSAutoreleasePool alloc] init];
-    UIApplicationUseLegacyEvents(1);
     returnCode = UIApplicationMain(argc, argv, @"vMacApp", @"vMacApp");
     [pool release];
     return returnCode;

@@ -1,6 +1,6 @@
 #import <UIKit/UIKit.h>
 
-@interface DiskListTable : UITable {
+@interface DiskListTable : UITableView {
     
 }
 @end

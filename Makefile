@@ -1,6 +1,6 @@
 PROD = minivmac
 APP  = minivmac.app
-VERSION=1.1
+VERSION=1.1.1
 
 MNVM = ADDRSPAC.o \
        GLOBGLUE.o \
@@ -18,9 +18,8 @@ MNVM = ADDRSPAC.o \
        SONYEMDV.o \
        VIAEMDEV.o
 OBJS = $(MNVM) main.o glue.o vMacApp.o MainView.o \
-       SurfaceView.o SettingsView.o \
-       DiskListTable.o InsertDiskView.o NewDiskView.o \
-       KeyboardView.o KBKey.o ExtendedAttributes.o 
+       SurfaceView.o ExtendedAttributes.o KeyboardView.o KBKey.o \
+       InsertDiskView.o NewDiskView.o SettingsView.o
 
 EXTRAS = Resources/dskicon
 

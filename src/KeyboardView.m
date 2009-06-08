@@ -23,7 +23,7 @@
         [self setSearchPaths:[NSArray arrayWithObject:[[NSBundle mainBundle] resourcePath]]];
         
         // notification
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didChangePreferences:) name:@"preferencesUpdated" object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didChangePreferences:) name:NSUserDefaultsDidChangeNotification object:nil];
     }
     return self;
 }
@@ -203,17 +203,6 @@
         [k setMyTitle:state];
 }
 
-- (void)mouseDown:(GSEventRef)event {
-    
-}
-
-- (void)mouseUp:(GSEventRef)event {
-
-}
-
-- (void)mouseDragged:(GSEventRef)event {
-
-}
 #if 0
 #pragma mark -
 #pragma mark Key Delegate

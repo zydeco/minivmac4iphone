@@ -1,5 +1,6 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
+#import <UIKit/UIEvent.h>
 #import "vMacApp.h"
 #import "SurfaceView.h"
 #import "InsertDiskView.h"
@@ -10,16 +11,17 @@
 
 @interface MainView : UIView
 {
-    SurfaceView*    screenView;
-    KeyboardView*   keyboardView;
-    InsertDiskView* insertDiskView;
-    SettingsView*   settingsView;
+    SurfaceView     *screenView;
+    KeyboardView    *keyboardView;
+    InsertDiskView  *insertDiskView;
+    SettingsView    *settingsView;
     
     // screen
     BOOL            screenSizeToFit;
     Direction       screenPosition;
     
     // mouse
+    UITouch         *mouseTouch;
     BOOL            trackpadMode, trackpadClick;
     BOOL            clickScheduled, mouseDrag;
     Point           clickLoc;
@@ -27,12 +29,16 @@
     Point           lastMouseLoc;
     Point           mouseOffset;
     // gesture
+    BOOL            inGesture;
     CGPoint         gestureStart;
 }
 
 - (void)didChangePreferences:(NSNotification *)aNotification;
+- (void)_createKeyboardView;
+- (void)_createInsertDiskView;
+- (void)_createSettingsView;
 
-- (Point)mouseLocForEvent:(GSEventRef)event;
+- (Point)mouseLocForCGPoint:(CGPoint)point;
 - (void)scheduleMouseClickAt:(Point)mouseLoc;
 - (void)cancelMouseClick;
 - (void)mouseClick;
@@ -41,6 +47,6 @@
 - (void)scrollScreenViewTo:(Direction)scroll;
 
 - (void)twoFingerSwipeGesture:(Direction)direction;
-- (void)twoFingerTapGesture:(GSEventRef)event;
+- (void)twoFingerTapGesture:(UIEvent *)event;
 
 @end

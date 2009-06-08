@@ -2,15 +2,15 @@
 #import "KeyboardView.h"
 #import <UIKit/UIPushButton-Original.h>
 
-static GSFontRef sharedKeyFont = NULL;
+static UIFont* sharedKeyFont = NULL;
 
 @implementation KBKey
 
 @synthesize keyboard;
 
-+ (GSFontRef)sharedKeyFont {
++ (UIFont*)sharedKeyFont {
     if (sharedKeyFont == NULL)
-        sharedKeyFont = GSFontCreateWithName("Helvetica", kGSFontTraitBold, 22);
+        sharedKeyFont = [UIFont boldSystemFontOfSize:22];
     return sharedKeyFont;
 }
 
@@ -32,8 +32,8 @@ static GSFontRef sharedKeyFont = NULL;
     // set titles
     id titles = [d valueForKey:@"Title"];
     if (titles) {
-        [self setTitleFont:[KBKey sharedKeyFont]];
-        [self setTitleColor:(CGColorRef)[UIColor blackColor] forState: 0];
+        [self setFont:[KBKey sharedKeyFont]];
+        [self setTitleColor:[UIColor blackColor] forState: UIControlStateNormal];
         
         // set title
         if ([titles isKindOfClass:[NSDictionary class]]) {
@@ -53,7 +53,7 @@ static GSFontRef sharedKeyFont = NULL;
             title[2] = [titles retain];
             title[3] = [titles retain];
         }
-        [self setTitle:title[0]];
+        [self setTitle:title[0] forState: UIControlStateNormal];
     }
     
     return self;
@@ -76,24 +76,27 @@ static GSFontRef sharedKeyFont = NULL;
     // set key data
     type = keyType;
     scancode = keyScancode;
+    isDown = NO;
     
     // set view images
-    [self setBackground:[keysUp objectAtIndex:keyType] forState:0]; // up
+    [self setBackgroundImage:[keysUp objectAtIndex:keyType] forState:0]; // up
     if (IsStickyKey(keyType)) {
-        [self setBackground:[keysHold objectAtIndex:keyType] forState:1]; // down
-        [self setBackground:[keysDown objectAtIndex:keyType] forState:4]; // selected
-        [self setBackground:[keysHold objectAtIndex:keyType] forState:1|4]; // down+selected
+        [self setBackgroundImage:[keysHold objectAtIndex:keyType] forState:1]; // down
+        [self setBackgroundImage:[keysDown objectAtIndex:keyType] forState:4]; // selected
+        [self setBackgroundImage:[keysHold objectAtIndex:keyType] forState:1|4]; // down+selected
     } else if (keyType == KBKey_Toggle) {
-        [self setBackground:[keysDown objectAtIndex:keyType] forState:4]; // selected
+        [self setBackgroundImage:[keysDown objectAtIndex:keyType] forState:4]; // selected
     } else {
-        [self setBackground:[keysDown objectAtIndex:keyType] forState:1]; // down
+        [self setBackgroundImage:[keysDown objectAtIndex:keyType] forState:1]; // down
     }
     
     // set other view stuff
     [self setUserInteractionEnabled: YES];
-    [self setDrawContentsCentered: YES];
-    [self setStretchBackground: NO];
     [self setAutosizesToFit: NO];
+    
+    // actions
+    [self addTarget:self action:@selector(_keyDown:) forControlEvents:UIControlEventTouchDown|UIControlEventTouchDownRepeat];
+    [self addTarget:self action:@selector(_keyUp:) forControlEvents:UIControlEventTouchDragExit|UIControlEventTouchUpInside|UIControlEventTouchCancel];
     
     return self;
 }
@@ -107,17 +110,19 @@ static GSFontRef sharedKeyFont = NULL;
 - (void)setMyTitle:(NSInteger)i {
     if (i < 0 || i > 3) return;
     if (title[i] == nil) i = 0;
-    [self setTitle:title[i]];
+    [self setTitle:title[i] forState:UIControlStateNormal];
 }
 
-- (void)mouseDown:(GSEventRef)event {
+- (void)_keyDown:(id)sender {
+    isDown = YES;
     [keyboard keyDown:self type:type scancode:scancode];
-    [super mouseDown:event];
 }
 
-- (void)mouseUp:(GSEventRef)event {
-    [keyboard keyUp:self type:type scancode:scancode];
-    [super mouseUp:event];
+- (void)_keyUp:(id)sender {
+    if (isDown) {
+        [keyboard keyUp:self type:type scancode:scancode];
+        isDown = NO;
+    }
 }
 
 @end

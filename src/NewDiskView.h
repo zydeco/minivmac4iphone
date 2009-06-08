@@ -1,6 +1,5 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
-#import <UIKit/UISliderControl.h>
 
 extern float NewDiskViewAnimationDuration;
 extern CGRect NewDiskViewFrameHidden;
@@ -8,17 +7,17 @@ extern CGRect NewDiskViewFrameVisible;
 
 @interface NewDiskView : UIView
 {
-    UINavigationBar*        navBar;
-    UITextLabel*            labels[2];
-    UITextLabel*            sizeLabel;
-    UITextField*            nameField;
-    UISliderControl*        sizeSlider;
-    UIImageView*            iconView;
+    UINavigationBar*    navBar;
+    UILabel*            labels[2];
+    UILabel*            sizeLabel;
+    UITextField*        nameField;
+    UISlider*           sizeSlider;
+    UIImageView*        iconView;
 }
 
 - (void)hide;
 - (void)show;
-- (void)sizeSliderChanged:(UISliderControl*)slider;
+- (void)sizeSliderChanged:(UISlider*)slider;
 - (int)selectedImageSize;
 @end
 

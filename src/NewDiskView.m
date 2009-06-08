@@ -12,21 +12,29 @@ CGRect NewDiskViewFrameVisible = {{0.0, 0.0}, {480.0, 158.0}};
         
         // create nav bar
         navBar = [[UINavigationBar alloc] initWithFrame:CGRectMake(0.0, 0.0, rect.size.width, 48.0)];
-        [navBar setDelegate:self];
         UINavigationItem *navItem = [[UINavigationItem alloc] initWithTitle:NSLocalizedString(@"NewDiskImageTitle", nil)];
-        [navBar pushNavigationItem: navItem];
-        [navBar showLeftButton:NSLocalizedString(@"Cancel",nil) withStyle:1 rightButton:NSLocalizedString(@"CreateDiskImage", nil) withStyle:2];
-        [self addSubview: navBar];
+        UIBarButtonItem *button;
+        // cancel
+        button = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Cancel",nil) style:1 target:self action:@selector(hide)]; // XXX: UIBarButtonItemStyleBordered
+        [navItem setLeftBarButtonItem:button animated:NO];
+        [button release];
+        // create
+        button = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"CreateDiskImage",nil) style:2 target:self action:@selector(createDiskImage)]; // XXX: UIBarButtonItemStyleDone
+        [navItem setRightBarButtonItem:button animated:NO];
+        [button release];
+        // nav bar
+        [navBar pushNavigationItem:navItem animated:NO];
         [navItem autorelease];
+        [self addSubview: navBar];
         
         // create labels
-        labels[0] = [[UITextLabel alloc] initWithFrame:CGRectMake(20, 63, 80, 21)];
+        labels[0] = [[UILabel alloc] initWithFrame:CGRectMake(20, 63, 80, 21)];
         labels[0].text = NSLocalizedString(@"Name:", nil);
         [self addSubview:labels[0]];
-        labels[1] = [[UITextLabel alloc] initWithFrame:CGRectMake(20, 104, 80, 21)];
+        labels[1] = [[UILabel alloc] initWithFrame:CGRectMake(20, 104, 80, 21)];
         labels[1].text = NSLocalizedString(@"Size:", nil);
         [self addSubview:labels[1]];
-        sizeLabel = [[UITextLabel alloc] initWithFrame:CGRectMake(380, 104, 80, 21)];
+        sizeLabel = [[UILabel alloc] initWithFrame:CGRectMake(380, 104, 80, 21)];
         [self addSubview:sizeLabel];
         
         // icon view
@@ -35,16 +43,15 @@ CGRect NewDiskViewFrameVisible = {{0.0, 0.0}, {480.0, 158.0}};
         
         // name field
         nameField = [[UITextField alloc] initWithFrame:CGRectMake(108, 60, 264, 31)];
-        [nameField setBorderStyle:3];
+        [nameField setBorderStyle:3]; // XXX: UITextBorderStyleRoundedRect
         [self addSubview:nameField];
         
         // size slider
-        sizeSlider = [[UISliderControl alloc] initWithFrame:CGRectMake(106, 104, 268, 23)];
-        [sizeSlider addTarget:self action:@selector(sizeSliderChanged:) forEvents:4096];
-        [sizeSlider setMinValue:0.0];
-        [sizeSlider setMaxValue:50.0];
-        [sizeSlider setValue:3];
-        [sizeSlider setShowValue:NO];
+        sizeSlider = [[UISlider alloc] initWithFrame:CGRectMake(106, 104, 268, 23)];
+        [sizeSlider addTarget:self action:@selector(sizeSliderChanged:) forControlEvents:UIControlEventValueChanged];
+        sizeSlider.minimumValue = 0.0;
+        sizeSlider.maximumValue = 50.0;
+        sizeSlider.value = 3.0;
         [sizeSlider setContinuous:YES];
         [self addSubview: sizeSlider];
 
@@ -81,19 +88,8 @@ CGRect NewDiskViewFrameVisible = {{0.0, 0.0}, {480.0, 158.0}};
     [UIView endAnimations];
 }
 
-#if 0
-#pragma mark -
-#pragma mark Navigation Bar Delegate
-#endif
-
-- (void)navigationBar:(UINavigationBar *)navbar buttonClicked:(int)button {
-    if (button == 1) {
-        // left button, cancel
-        [self hide];
-    } else if (button == 0) {
-        // right button, create
-        [[vMacApp sharedInstance] createDiskImage:nameField.text size:[self selectedImageSize]];
-    }
+- (void)createDiskImage {
+    [[vMacApp sharedInstance] createDiskImage:nameField.text size:[self selectedImageSize]];
 }
 
 #if 0
@@ -101,7 +97,7 @@ CGRect NewDiskViewFrameVisible = {{0.0, 0.0}, {480.0, 158.0}};
 #pragma mark Slider Delegate
 #endif
 
-- (void)sizeSliderChanged:(UISliderControl*)slider {
+- (void)sizeSliderChanged:(UISlider*)slider {
     // round value to allowed values
     int value = round(slider.value);
     if (value < 3) value = 0; // 400K

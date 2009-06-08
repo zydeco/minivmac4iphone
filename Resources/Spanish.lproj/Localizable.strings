@@ -35,7 +35,6 @@
 "Close" = "Cerrar";
 
 /* new disk image */
-"NewDiskImageBtn" = "Nueva";
 "NewDiskImageTitle" = "Nueva Imagen";
 "CreateDiskImage" = "Crear";
 "Name:" = "Nombre:";

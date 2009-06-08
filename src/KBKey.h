@@ -27,14 +27,15 @@ typedef enum KBKeyTitleState {
     KBKeyTitle_ShiftOption
 } KBKeyTitleState;
 
-@interface KBKey : UIPushButton {
+@interface KBKey : UIButton {
     KBKeyType       type;
     KeyboardView*   keyboard;
     int             scancode;
     NSString*       title[4]; // normal, option, shift, shift+option
+    BOOL            isDown;
 }
 
-+ (GSFontRef)sharedKeyFont;
++ (UIFont*)sharedKeyFont;
 + (KBKey*)keyWithDictionary:(NSDictionary*)d images:(NSDictionary*)keyImages;
 + (KBKey*)keyWithType:(KBKeyType)keyType scancode:(int)keyScancode position:(CGPoint)position images:(NSDictionary*)keyImages;
 

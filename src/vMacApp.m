@@ -116,7 +116,7 @@ IMPORTFUNC blnr InitEmulation(void);
         [defaults setBool:YES forKey:@"CanDeleteDiskImages"];
     
     [defaults synchronize];
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didChangePreferences:) name:@"preferencesUpdated" object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didChangePreferences:) name:NSUserDefaultsDidChangeNotification object:nil];
 }
 
 - (void)didChangePreferences:(NSNotification *)aNotification {

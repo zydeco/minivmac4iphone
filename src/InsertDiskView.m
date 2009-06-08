@@ -12,23 +12,28 @@
         
         // create table
         CGRect tableRect = CGRectMake(0.0, 48.0, rect.size.width, rect.size.height-48.0);
-        table = [[DiskListTable alloc] initWithFrame: tableRect];
-        UITableColumn* col = [[UITableColumn alloc] initWithTitle:@"Title" identifier:@"title" width:tableRect.size.width];
-        [table addTableColumn: col];
-        [table setSeparatorStyle: 1];
-        [table setRowHeight: 48.0];
+        table = [[UITableView alloc] initWithFrame:tableRect style:0];
         [table setDelegate: self];
         [table setDataSource: self];
         [self addSubview: table];
         
         // create nav bar
         navBar = [[UINavigationBar alloc] initWithFrame: CGRectMake(0.0, 0.0, rect.size.width, 48.0)];
-        [navBar setDelegate:self];
         UINavigationItem *navItem = [[UINavigationItem alloc] initWithTitle:NSLocalizedString(@"InsertDisk", nil)];
-        [navBar pushNavigationItem: navItem];
-        [navBar showButtonsWithLeftTitle:([vMacApp sharedInstance].canCreateDiskImages?NSLocalizedString(@"NewDiskImageBtn",nil):nil) rightTitle: NSLocalizedString(@"Cancel", nil) leftBack: NO];
+        UIBarButtonItem *button;
+        if ([vMacApp sharedInstance].canCreateDiskImages) {
+            button = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:4 target:self action:@selector(newDiskImage)]; // XXX:UIBarButtonSystemItemAdd
+            [navItem setLeftBarButtonItem:button animated:NO];
+            [button release];
+        }
+        
+        // cancel button
+        button = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:14 target:self action:@selector(hide)]; // XXX: UIBarButtonSystemItemStop
+        [navItem setRightBarButtonItem:button animated:NO];
+        [button release];
+        [navBar pushNavigationItem:navItem animated:NO];
+        [navItem release];
         [self addSubview: navBar];
-        [navItem autorelease];
         
         // notification
         NSNotificationCenter * nc = [NSNotificationCenter defaultCenter];
@@ -60,14 +65,14 @@
 }
 
 - (void)show {
-    [table selectRow:-1 byExtendingSelection:NO];
+    [table selectRowAtIndexPath:[NSIndexPath indexPathForRow:-1 inSection:0] animated:NO scrollPosition:1]; // XXX: UITableViewScrollPositionTop
     [UIView beginAnimations:nil context:nil];
     [UIView setAnimationDuration:InsertDiskViewAnimationDuration];
     self.frame = InsertDiskViewFrameVisible;
     [UIView endAnimations];
     [self findDiskFiles];
     [table reloadData];
-    [[vMacApp sharedInstance] performSelector:@selector(createDiskIcons:) withObject:nil afterDelay:2.0];
+    [[vMacApp sharedInstance] performSelector:@selector(createDiskIcons:) withObject:nil afterDelay:5.0];
 }
 
 - (void)didCreateDisk:(NSNotification *)aNotification {
@@ -129,50 +134,52 @@
 #pragma mark Navigation Bar Delegate
 #endif
 
-- (void)navigationBar:(UINavigationBar *)navbar buttonClicked:(int)button {
-    if (button == 1) {
-        // new disk image
-        if (newDisk == nil) {
-            newDisk = [[NewDiskView alloc] initWithFrame:NewDiskViewFrameHidden];
-            [self.superview addSubview:newDisk];
-        }
-        [newDisk show];
-    } else if (button == 0) {
-        // close
-        [self hide];
+- (void)newDiskImage {
+    if (newDisk == nil) {
+        newDisk = [[NewDiskView alloc] initWithFrame:NewDiskViewFrameHidden];
+        [self.superview addSubview:newDisk];
     }
+    [newDisk show];
+    [self.superview bringSubviewToFront:newDisk];
 }
 
 #if 0
 #pragma mark -
-#pragma mark Table Delegate
+#pragma mark Table Data Source & Delegate
 #endif
 
-- (int)numberOfRowsInTable: (UITable *)table {
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     return [diskFiles count];
 }
 
-- (UITableCell *)table:(UITable *)table cellForRow:(int)row column:(UITableColumn *)col {
-    UISimpleTableCell *cell = [[UISimpleTableCell alloc] init];
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
+    NSString *cellIdentifier = @"diskCell";
+    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:cellIdentifier];
     NSFileManager *fm = [NSFileManager defaultManager];
     
+    if (cell == nil) {
+        cell = [[UITableViewCell alloc] initWithFrame:CGRectZero reuseIdentifier:cellIdentifier];
+        [cell autorelease];
+    }
+    
     // get path
-    NSString* diskPath = [diskFiles objectAtIndex:row];
+    NSString* diskPath = [diskFiles objectAtIndex:indexPath.row];
     
     // set icon
-    [cell setIcon:[self iconForDiskImageAtPath:diskPath]];
+    cell.image = [self iconForDiskImageAtPath:diskPath];
     
     // set title
-    NSString *diskTitle = [[diskPath lastPathComponent] stringByDeletingPathExtension];
-    [cell setTitle:diskTitle];
+    cell.text = [[diskPath lastPathComponent] stringByDeletingPathExtension];
     
-    // enable?
-    if ([diskDrive diskIsInserted:[diskFiles objectAtIndex:row]])
-        [cell setEnabled:NO];
+    // can't cells be disabled?
+    if ([diskDrive diskIsInserted:[diskFiles objectAtIndex:indexPath.row]])
+        cell.textColor = [UIColor grayColor];
+    else
+        cell.textColor = [UIColor blackColor];
     
-    return [cell autorelease];
+    return cell;
 }
-
+/*
 - (BOOL)table:(UITable *)aTable canDeleteRow:(int)row {
     NSString * diskPath = [diskFiles objectAtIndex:row];
     if ([diskDrive diskIsInserted:diskPath]) return NO;
@@ -191,13 +198,22 @@
     
     [self findDiskFiles];
 }
-
-- (void)tableRowSelected:(NSNotification*)notification {
+*/
+- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     @try {
-        [diskDrive insertDisk:[diskFiles objectAtIndex:[table selectedRow]]];
+        id diskFile = [diskFiles objectAtIndex:indexPath.row];
+        if ([diskDrive diskIsInserted:diskFile]) return;
+        [diskDrive insertDisk:diskFile];
         [self hide];
     }
     @catch (NSException* e) {}
 }
 
+- (NSIndexPath *)tableView:(UITableView *)tableView willSelectRowAtIndexPath:(NSIndexPath *)indexPath {
+    @try {
+        id diskFile = [diskFiles objectAtIndex:indexPath.row];
+        if ([diskDrive diskIsInserted:diskFile]) return nil;
+        return indexPath;
+    } @catch (NSException* e) {}
+}
 @end

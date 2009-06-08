@@ -6,6 +6,8 @@
 
 #define UIInterfaceOrientationLandscapeRight 3
 
+extern NSString * const kCAFilterLinear; // XXX: from QuartzCore
+
 @interface UIApplication ()
 - (void) setStatusBarOrientation:(int)fp8 animated:(BOOL)fp12;
 @end
