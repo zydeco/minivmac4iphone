@@ -1,6 +1,5 @@
 #import "KBKey.h"
 #import "KeyboardView.h"
-#import <UIKit/UIPushButton-Original.h>
 
 static UIFont* sharedKeyFont = NULL;
 

@@ -1,5 +1,4 @@
 #import "InsertDiskView.h"
-#import <UIKit/UISimpleTableCell.h>
 #import <Foundation/NSTask.h>
 #import "ExtendedAttributes.h"
 
