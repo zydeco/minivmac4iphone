@@ -28,6 +28,7 @@
 "SettingsMouseTrackpadMode" = "משטח מעקב";
 "SettingsDisk" = "דיסקים";
 "SettingsDiskDelete" = "ניתנים למחיקה";
+"SettingsDiskIcons" = "צור סמלים";
 
 /* global */
 "OK" = "אישור";
