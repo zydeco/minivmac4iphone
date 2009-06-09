@@ -179,26 +179,27 @@
     
     return cell;
 }
-/*
-- (BOOL)table:(UITable *)aTable canDeleteRow:(int)row {
-    NSString * diskPath = [diskFiles objectAtIndex:row];
-    if ([diskDrive diskIsInserted:diskPath]) return NO;
-    return [[NSFileManager defaultManager] isDeletableFileAtPath:diskPath];
+
+- (UITableViewCellEditingStyle)tableView:(UITableView *)tableView editingStyleForRowAtIndexPath:(NSIndexPath *)indexPath {
+    NSString * diskPath = [diskFiles objectAtIndex:indexPath.row];
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"CanDeleteDiskImages"] == NO) return UITableViewCellEditingStyleNone;
+    if ([diskDrive diskIsInserted:diskPath]) return UITableViewCellEditingStyleNone;
+    if ([[NSFileManager defaultManager] isDeletableFileAtPath:diskPath]) return UITableViewCellEditingStyleDelete;
+    return UITableViewCellEditingStyleNone;
 }
 
-- (void)table:(UITable *)aTable deleteRow:(int)row {
-    NSFileManager * fm = [NSFileManager defaultManager];
-    // delete file
-    NSString * diskPath = [diskFiles objectAtIndex:row];
-    if ([fm removeItemAtPath:diskPath error:NULL]) {
-        // delete icon file
-        NSString * iconPath = [[diskPath stringByDeletingPathExtension] stringByAppendingPathExtension:@"png"];
-        [fm removeItemAtPath:iconPath error:NULL];
+- (void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath {
+    if (editingStyle == UITableViewCellEditingStyleDelete) {
+        NSFileManager * fm = [NSFileManager defaultManager];
+        // delete file
+        NSString * diskPath = [diskFiles objectAtIndex:indexPath.row];
+        if ([fm removeItemAtPath:diskPath error:NULL]) {
+            [self findDiskFiles];
+            [table deleteRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationFade];
+        }
     }
-    
-    [self findDiskFiles];
 }
-*/
+
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     @try {
         id diskFile = [diskFiles objectAtIndex:indexPath.row];
