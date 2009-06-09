@@ -2,7 +2,6 @@
 #import <UIKit/UIKit.h>
 #import <UIKit/UISectionList.h>
 #import "vMacApp.h"
-#import "DiskListTable.h"
 #import "NewDiskView.h"
 
 #define InsertDiskViewAnimationDuration     0.3
