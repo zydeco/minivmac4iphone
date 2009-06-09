@@ -1,4 +1,5 @@
 #import <Foundation/Foundation.h>
+#import <Foundation/NSTask.h>
 #import <UIKit/UIKit.h>
 #import <UIKit/UIAlertView.h>
 #import <AudioToolbox/AudioToolbox.h>
@@ -98,6 +99,9 @@ typedef enum Direction {
     
     // graphics stuff
     CGColorSpaceRef rgbColorSpace;
+    
+    // icon generator
+    NSTask      *iconTask;
 }
 
 + (vMacApp*)sharedInstance;
@@ -117,6 +121,7 @@ typedef enum Direction {
 - (void)resumeEmulation;
 - (NSArray*)availableDiskImages;
 - (void)createDiskIcons:(NSNumber*)force;
+- (void)stopCreatingDiskIcons;
 - (BOOL)diskImageHasIcon:(NSString*)path;
 - (void)writeDiskImageThread;
 - (UIImage*)screenImage;

@@ -28,6 +28,7 @@
 "SettingsMouseTrackpadMode" = "Trackpad";
 "SettingsDisk" = "Imágenes de Disco";
 "SettingsDiskDelete" = "Eliminables";
+"SettingsDiskIcons" = "Crear Iconos";
 
 /* global */
 "OK" = "OK";
