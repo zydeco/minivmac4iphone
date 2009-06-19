@@ -89,6 +89,7 @@ CGRect NewDiskViewFrameVisible = {{0.0, 0.0}, {480.0, 158.0}};
 }
 
 - (void)createDiskImage {
+    nameField.text = [nameField.text stringByReplacingOccurrencesOfString:@"/" withString:@":"];
     [[vMacApp sharedInstance] createDiskImage:nameField.text size:[self selectedImageSize]];
 }
 
