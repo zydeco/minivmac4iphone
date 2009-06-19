@@ -61,7 +61,8 @@
 }
 
 - (void)show {
-    [table selectRowAtIndexPath:[NSIndexPath indexPathForRow:-1 inSection:0] animated:NO scrollPosition:1]; // XXX: UITableViewScrollPositionTop
+    NSIndexPath *selectedRow = [table indexPathForSelectedRow];
+    if (selectedRow) [table deselectRowAtIndexPath:selectedRow animated:NO];
     [UIView beginAnimations:nil context:nil];
     [UIView setAnimationDuration:SettingsViewAnimationDuration];
     self.frame = SettingsViewFrameVisible;
