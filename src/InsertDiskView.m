@@ -2,6 +2,8 @@
 #import <Foundation/NSTask.h>
 #import "ExtendedAttributes.h"
 
+#define kNavBarHeight 32
+
 @implementation InsertDiskView
 @synthesize diskDrive;
 
@@ -10,14 +12,14 @@
         diskFiles = [[NSArray array] retain];
         
         // create table
-        CGRect tableRect = CGRectMake(0.0, 48.0, rect.size.width, rect.size.height-48.0);
+        CGRect tableRect = CGRectMake(0.0, kNavBarHeight, rect.size.width, rect.size.height-kNavBarHeight);
         table = [[UITableView alloc] initWithFrame:tableRect style:0];
         [table setDelegate: self];
         [table setDataSource: self];
         [self addSubview: table];
         
         // create nav bar
-        navBar = [[UINavigationBar alloc] initWithFrame: CGRectMake(0.0, 0.0, rect.size.width, 48.0)];
+        navBar = [[UINavigationBar alloc] initWithFrame: CGRectMake(0.0, 0.0, rect.size.width, kNavBarHeight)];
         UINavigationItem *navItem = [[UINavigationItem alloc] initWithTitle:NSLocalizedString(@"InsertDisk", nil)];
         UIBarButtonItem *button;
         if ([vMacApp sharedInstance].canCreateDiskImages) {

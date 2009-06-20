@@ -1,6 +1,9 @@
 #import "SettingsView.h"
 #import "vMacApp.h"
 
+#define kToolbarHeight 32
+#define kNavBarHeight 32
+
 @implementation SettingsView
 
 - (id)initWithFrame:(CGRect)frame {
@@ -11,7 +14,7 @@
         switchPrefKeys = [[NSMutableArray arrayWithCapacity:5] retain];
         
         // create nav bar
-        navBar = [[UINavigationBar alloc] initWithFrame: CGRectMake(0.0, 0.0, frame.size.width, 48.0)];
+        navBar = [[UINavigationBar alloc] initWithFrame: CGRectMake(0.0, 0.0, frame.size.width, kNavBarHeight)];
         UINavigationItem *navItem = [[UINavigationItem alloc] initWithTitle:NSLocalizedString(@"Settings", nil)];
         UIBarButtonItem *button;
         [navBar pushNavigationItem:navItem animated:NO];
@@ -22,14 +25,14 @@
         [self addSubview: navBar];
         
         // create table
-        CGRect tableRect = CGRectMake(0.0, 48.0, frame.size.width, frame.size.height-92.0);
+        CGRect tableRect = CGRectMake(0.0, kNavBarHeight, frame.size.width, frame.size.height-kNavBarHeight-kToolbarHeight);
         table = [[UITableView alloc] initWithFrame: tableRect style: 1]; // XXX: UITableViewStyleGrouped
         [table setDelegate: self];
         [table setDataSource: self];
         [self addSubview: table];
         
         // create toolbar
-        CGRect toolbarRect = CGRectMake(0.0, 320.0-44.0, frame.size.width, 44.0);
+        CGRect toolbarRect = CGRectMake(0.0, 320.0-kToolbarHeight, frame.size.width, kToolbarHeight);
         UIBarButtonItem *interruptButton, *resetButton;
         interruptButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"PSInterrupt.png"]
                             style:0 target:self action:@selector(macInterrupt)];
