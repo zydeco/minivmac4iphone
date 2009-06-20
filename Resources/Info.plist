@@ -10,8 +10,6 @@
 	<string>Mini vMac for iPhone</string>
 	<key>CFBundleExecutable</key>
 	<string>minivmac</string>
-	<key>CFBundleIconFile</key>
-	<string>Icon.png</string>
 	<key>CFBundleIdentifier</key>
 	<string>net.namedfork.minivmac</string>
 	<key>CFBundleInfoDictionaryVersion</key>
