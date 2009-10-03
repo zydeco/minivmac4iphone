@@ -32,7 +32,10 @@ IMPORTFUNC blnr InitEmulation(void);
                     @"/Library/MacOSClassic",
                     nil] retain];
     initOk = [self initEmulation];
-    AudioServicesCreateSystemSoundID((CFURLRef)[NSURL fileURLWithPath:[mb pathForResource:@"diskEject" ofType:@"aiff"]] ,&ejectSound);
+    // eject sound
+    CFURLRef ejectSoundURL = (CFURLRef)[NSURL fileURLWithPath:[mb pathForResource:@"diskEject" ofType:@"aiff"]];
+    OSStatus err = AudioServicesCreateSystemSoundID(ejectSoundURL, &ejectSound);
+    if (err != noErr) NSLog(@"Could not load eject sound %@ (%d)", ejectSoundURL, err);
     rgbColorSpace = CGColorSpaceCreateDeviceRGB();
     
     // check default search path
