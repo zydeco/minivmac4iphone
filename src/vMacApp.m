@@ -361,7 +361,7 @@ IMPORTFUNC blnr InitEmulation(void);
     pool = [NSAutoreleasePool new];
     
     // find disks
-    taskArgs = [NSMutableArray arrayWithObject:@"-x:net.namedfork.DiskImageIcon"];
+    taskArgs = [NSMutableArray arrayWithObjects:@"-q", @"-x:net.namedfork.DiskImageIcon", nil];
     diskImages = [self availableDiskImages];
     
     // check which disk images need icons
@@ -372,7 +372,7 @@ IMPORTFUNC blnr InitEmulation(void);
         [taskArgs addObjectsFromArray:diskImages];
     
     // return if no disk images selected
-    if ([taskArgs count] == 1) {
+    if ([taskArgs count] == 2) {
         [pool release];
         return;
     }

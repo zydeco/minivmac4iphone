@@ -23,7 +23,9 @@
 
 // usage: dskicon [output_file|-x:attr] disk_image
 // will determine an appropiate icon and write it as png to output_file
-// returns 0 on success
+// returns the number of icons created
+
+BOOL quiet = NO;
 
 int main (int argc, char const *argv[])
 {
@@ -35,14 +37,25 @@ int main (int argc, char const *argv[])
     }
     
     int retVal = 0;
+    int startArg = 1;
     NSAutoreleasePool * pool = [NSAutoreleasePool new];
-    NSString * output = [NSString stringWithUTF8String:argv[1]];
+    
+    // extra arguments
+    for(int i=1; i < argc; i++) {
+        // getopt? what's that?
+        if (argv[i][0] != '-') break;
+        if ((argv[i][1] == 'x') && (argv[i][2] == ':')) break;
+        if ((strcmp(argv[i],"-q") == 0) || (strcmp(argv[i], "--quiet") == 0)) quiet = YES;
+        startArg++;
+    }
+    
+    NSString * output = [NSString stringWithUTF8String:argv[startArg]];
     NSString * xattr = nil;
     if ([output hasPrefix:@"-x:"]) xattr = [output substringFromIndex:3];
     
-    for(int i=2; i < argc; i++) {
+    for(int i=startArg+1; i < argc; i++) {
         NSString * diskFile = [[NSString alloc] initWithUTF8String:argv[i]];
-        NSLog(@"Creating icon for %@", diskFile);
+        if (!quiet) NSLog(@"Creating icon for %@", diskFile);
         NSData *iconData = [[DSKIconFactory sharedInstance] iconForDiskImage:diskFile];
         if (iconData) {
             if (xattr) {

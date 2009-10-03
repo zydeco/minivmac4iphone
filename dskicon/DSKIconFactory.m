@@ -30,6 +30,8 @@ NSData *UIImagePNGRepresentation(UIImage *image);
 #endif
 #import "DSKIconFactory-Private.h"
 
+extern BOOL quiet;
+
 static DSKIconFactory *sharedInstance;
 // Mac OS 1 bit palette
 static uint32_t ctb1[2] = {0xFFFFFF, 0x000000};
@@ -240,7 +242,7 @@ const char _pngIconDCAS[] = {
     hfsfile * hfile = NULL;
     RFILE * rfile = NULL;
     if (appPath == nil) return nil;
-    NSLog(@"Using icon for %@", appPath);
+    if (!quiet) NSLog(@"Using icon for %@", appPath);
     
     // open resource fork
     hfile = hfs_open(vol, [appPath cStringUsingEncoding:NSMacOSRomanStringEncoding]);
@@ -345,7 +347,7 @@ end:
     hfs_chdir(vol, vent.name);
     hfile = hfs_open(vol, "Desktop");
     if (hfile == NULL) {
-        NSLog(@"Desktop file not found, new version not supported");
+        if (!quiet) NSLog(@"Desktop file not found, new version not supported");
         goto end;
     }
     // TODO support Desktop DB format, but it's not documented
@@ -447,7 +449,7 @@ end:
     }
     free(bundles);
     if (bundle == NULL) {
-        NSLog(@"BNDL resource not found");
+        if (!quiet) NSLog(@"BNDL resource not found");
         return nil;
     }
     
@@ -515,7 +517,7 @@ end:
         FREF = NULL;
     }
     if (FREF == NULL) {
-        NSLog(@"FREF resource not found");
+        if (!quiet) NSLog(@"FREF resource not found");
         return NSNotFound;
     }
     
