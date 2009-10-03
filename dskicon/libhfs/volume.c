@@ -270,8 +270,8 @@ int v_geometry(hfsvol *vol, int pnum)
 	ERROR(EINVAL, "volume partition is empty");
     }
 
-  if (vol->vlen < 800 * (1024 >> HFS_BLOCKSZ_BITS))
-    ERROR(EINVAL, "volume is smaller than 800K");
+  /*if (vol->vlen < 800 * (1024 >> HFS_BLOCKSZ_BITS))
+    ERROR(EINVAL, "volume is smaller than 800K");*/
 
   return 0;
 
