@@ -121,7 +121,7 @@
     if (section+1 < settingsGroupCount) return nil;
     NSString* bundleVersion = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"];
     NSString* bundleLongName = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleLongName"];
-    return [NSString stringWithFormat:@"%@ %@\n©2008-2009 namedfork.net", bundleLongName, bundleVersion];
+    return [NSString stringWithFormat:@"%@ %@\n©2008-2011 namedfork.net", bundleLongName, bundleVersion];
 }
 
 - (UITableViewCell*)cellWithIdentifier:(NSString*)cellIdentifier forTableView:(UITableView*)tableView {
