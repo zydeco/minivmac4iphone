@@ -298,15 +298,24 @@ IMPORTFUNC blnr InitEmulation(void);
 }
 
 - (short)readFromDrive:(short)n start:(unsigned long)start count:(unsigned long*)count buffer:(void*)buffer {
-    [drives[n] seekToFileOffset:(unsigned long long)start];
+    int fd = [drives[n] fileDescriptor];
+    if (fd == 0) {
+        *count = 0;
+        return 1;
+    }
+    lseek(fd, (off_t)start, SEEK_SET);
     read([drives[n] fileDescriptor], buffer, (size_t)*count);
     return 0;
 }
 
 - (short)writeToDrive:(short)n start:(unsigned long)start count:(unsigned long*)count buffer:(void*)buffer {
-    NSData *data = [NSData dataWithBytesNoCopy:buffer length:(NSUInteger)*count];
-    [drives[n] seekToFileOffset:(unsigned long long)start];
-    [drives[n] writeData:data];
+    int fd = [drives[n] fileDescriptor];
+    if (fd == 0) {
+        *count = 0;
+        return 1;
+    }
+    lseek(fd, (off_t)start, SEEK_SET);
+    write(fd, buffer, (size_t)*count);
     return 0;
 }
 - (short)sizeOfDrive:(short)n count:(unsigned long*)count {
