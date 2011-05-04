@@ -1,6 +1,6 @@
 PROD = minivmac
 APP  = minivmac.app
-VERSION=1.2.1
+VERSION=1.2.2
 
 MNVM = ADDRSPAC.o \
        GLOBGLUE.o \
@@ -93,11 +93,11 @@ install: app
 	ssh $(IPHONE) -l mobile uicache
 
 reinstall: app
-	ssh $(IPHONE) rm -f /Applications/$(APP)/$(PROD)
+	ssh root@$(IPHONE) rm -f /Applications/$(APP)/$(PROD)
 	scp -r build/$(APP)/$(PROD) root@$(IPHONE):/Applications/$(APP)/$(PROD)
 
 reinstall-all: app
-	ssh $(IPHONE) rm -f /Applications/$(APP)/$(PROD) /Applications/$(APP)/dskicon
+	ssh root@$(IPHONE) rm -f /Applications/$(APP)/$(PROD) /Applications/$(APP)/dskicon
 	scp -r build/$(APP) root@$(IPHONE):/Applications
 
 dist: app

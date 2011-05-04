@@ -18,6 +18,10 @@ IMPORTFUNC blnr InitEmulation(void);
     return _vmacAppSharedInstance;
 }
 
+- (BOOL)isRetinaDisplay {
+    return isRetinaDisplay;
+}
+
 - (void)applicationDidFinishLaunching:(UIApplication *)application {
     _vmacAppSharedInstance = self;
     
@@ -52,6 +56,10 @@ IMPORTFUNC blnr InitEmulation(void);
     [window setContentView:mainView];
     [window orderFront:self];
     [window makeKey:self];
+    
+    // check for retina display
+    if ([[UIScreen mainScreen] respondsToSelector:@selector(displayLinkWithTarget:selector:)] &&
+        ([[UIScreen mainScreen] scale] == 2.0)) isRetinaDisplay = YES;
     
     // start emulation
     if (initOk) [self startEmulation:self];

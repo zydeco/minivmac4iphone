@@ -8,5 +8,4 @@ Depiction: http://iphone.namedfork.net/minivmac/cydia-info.html
 Maintainer: Jesus A. Alvarez <zydeco@namedfork.net>
 Author: Jesus A. Alvarez <zydeco@namedfork.net>
 Section: Emulation
-Depends: sbcustomicon
 Icon: file:///Applications/minivmac.app/Icon.png

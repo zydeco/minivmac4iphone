@@ -78,7 +78,7 @@ typedef enum Direction {
 {
     UIWindow*   window;
     MainView*   mainView;
-    BOOL        initOk;
+    BOOL        initOk, isRetinaDisplay;
     
     NSUserDefaults* defaults;
     NSMutableSet*   openAlerts;
@@ -105,6 +105,7 @@ typedef enum Direction {
 }
 
 + (vMacApp*)sharedInstance;
+- (BOOL)isRetinaDisplay;
 
 - (NSArray*)searchPaths;
 - (NSString*)defaultSearchPath;

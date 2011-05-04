@@ -283,10 +283,10 @@
     if (screenSizeToFit) return;
     // calculate new position
     CGRect screenFrame = screenView.frame;
-    if (scroll & dirDown) screenFrame.origin.y = 320-vMacScreenHeight;
+    if (scroll & dirDown) screenFrame.origin.y = ([[vMacApp sharedInstance] isRetinaDisplay]?320.5:320.0)-vMacScreenHeight;
     else if (scroll & dirUp) screenFrame.origin.y = 0.0;
     if (scroll & dirLeft) screenFrame.origin.x = 0.0;
-    else if (scroll & dirRight) screenFrame.origin.x = 480-vMacScreenWidth;
+    else if (scroll & dirRight) screenFrame.origin.x = 480.0-vMacScreenWidth;
     if (scroll != screenPosition) {
         screenPosition = scroll;
         NSUserDefaults * defaults = [NSUserDefaults standardUserDefaults];
